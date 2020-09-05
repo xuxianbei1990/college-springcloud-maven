@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/college-springcloud-producter/college-springcloud.iml" filepath="$PROJECT_DIR$/college-springcloud-producter/college-springcloud.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/college-springcloud-maven.iml" filepath="$PROJECT_DIR$/.idea/college-springcloud-maven.iml" />
+      <module fileurl="file://$PROJECT_DIR$/college-springcloud-producter/producter-facade/producter-facade.iml" filepath="$PROJECT_DIR$/college-springcloud-producter/producter-facade/producter-facade.iml" />
+    </modules>
+  </component>
+</project>
