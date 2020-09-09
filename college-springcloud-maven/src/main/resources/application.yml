@@ -1,0 +1,30 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /
+
+spring:
+  jackson:
+    default-property-inclusion: non_null
+  application:
+    name: college-service-order
+  datasource:
+    username: root
+    password:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    testWhileIdle: true
+    validationQuery: select 1
+    testOnBorrow: false
+    validationInterval: 1000
+    minIdle: 10
+    maxIdle: 15
+    maxActive: 8
+    initialSize: 8
+    testOnConnect: true
+    initSQL: select 1
+    url:
+#    mybatis 驼峰处理
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
