@@ -2,6 +2,7 @@ package college.springcloud.producter.mapper;
 
 
 import college.springcloud.producter.model.CfClearHeader;
+import college.springcloud.producter.mybatis.BaseMapperEx;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -12,6 +13,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @author lywang
  * @since 2020-08-22
  */
-public interface CfClearHeaderMapper extends BaseMapper<CfClearHeader> {
+public interface CfClearHeaderMapper extends BaseMapperEx<CfClearHeader> {
 
 }
