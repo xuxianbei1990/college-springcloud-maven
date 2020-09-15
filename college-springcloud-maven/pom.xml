@@ -3,15 +3,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 <!-- 原因未知，加上这个	<packaging>pom</packaging> application.yml 就无法使用了-->
-	<modules>
-		<module>producter-facade</module>
-	</modules>
+	<packaging>pom</packaging>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>2.2.9.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+	<modules>
+		<module>producter-facade</module>
+	</modules>
 	<groupId>college</groupId>
 	<artifactId>college-springcloud-maven</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -21,8 +22,8 @@
 	<properties>
 		<java.version>1.8</java.version>
 		<mybatis.plus.version>3.3.2</mybatis.plus.version>
-		<mybatis.spring.version>2.1.3</mybatis.spring.version>
 		<fastjson.version>1.2.70</fastjson.version>
+		<rocket.springboot.version>2.1.0</rocket.springboot.version>
 	</properties>
 
 	<dependencies>
@@ -51,11 +52,11 @@
 			<artifactId>mybatis-plus-boot-starter</artifactId>
 			<version>${mybatis.plus.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.mybatis.spring.boot</groupId>
-			<artifactId>mybatis-spring-boot-starter</artifactId>
-			<version>${mybatis.spring.version}</version>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.mybatis.spring.boot</groupId>-->
+<!--			<artifactId>mybatis-spring-boot-starter</artifactId>-->
+<!--			<version>${mybatis.spring.version}</version>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -73,22 +74,22 @@
 			<artifactId>fastjson</artifactId>
 			<version>${fastjson.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>com.baomidou</groupId>
-			<artifactId>mybatis-plus-boot-starter</artifactId>
-			<version>${mybatis.plus.version}</version>
-		</dependency>
 		<!-- 引入子包-->
-		<dependency>
-			<groupId>college</groupId>
-			<artifactId>producter-facade</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-			<scope>compile</scope>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>college</groupId>-->
+<!--			<artifactId>producter-facade</artifactId>-->
+<!--			<version>0.0.1-SNAPSHOT</version>-->
+<!--			<scope>compile</scope>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.apache.rocketmq</groupId>
 			<artifactId>rocketmq-client</artifactId>
 			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.rocketmq</groupId>
+			<artifactId>rocketmq-spring-boot-starter</artifactId>
+			<version>${rocket.springboot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -101,6 +102,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<mainClass>college.springcloud.producter.CollegeSpringcloudMavenApplication</mainClass>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

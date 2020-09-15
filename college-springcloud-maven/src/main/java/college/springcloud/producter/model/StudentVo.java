@@ -1,15 +1,17 @@
 package college.springcloud.producter.model;
 
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
  * @author: xuxianbei
- * Date: 2020/8/31
- * Time: 21:13
+ * Date: 2020/9/15
+ * Time: 13:30
  * Version:V1.0
  */
 @Data
-public class SampleVo {
+@AllArgsConstructor
+public class StudentVo {
     private String name;
+    private Integer age;
 }

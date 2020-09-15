@@ -1,3 +1,5 @@
+
+
 server:
   port: 8083
   servlet:
@@ -27,4 +29,11 @@ spring:
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
-
+rocketmq:
+  name-server: 192.168.138.3
+  producer:
+    group: springcloud-producter
+    send-message-timeout: 5000
+  topic: springboot-producer
+  consumer:
+    group:
