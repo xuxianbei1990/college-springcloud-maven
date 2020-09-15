@@ -10,7 +10,6 @@ import lombok.Data;
  * Version:V1.0
  */
 @Data
-@AllArgsConstructor
 public class StudentVo {
     private String name;
     private Integer age;

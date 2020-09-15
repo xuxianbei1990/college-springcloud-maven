@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  * Version:V1.0
  */
 @Service
-@RocketMQMessageListener(topic = "${rocket.topic}", consumerGroup = "${rocketmq.consumer.group}")
+@RocketMQMessageListener(topic = "${rocketmq.topic}", consumerGroup = "${rocketmq.consumer.group}")
 public class StudentConsumer implements RocketMQListener<StudentVo> {
     @Override
     public void onMessage(StudentVo message) {

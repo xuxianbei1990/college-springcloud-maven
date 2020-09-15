@@ -7,6 +7,7 @@ import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQHeaders;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -24,23 +25,35 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Time: 11:52
  * Version:V1.0
  */
-@RequestMapping("rocket/")
+@RequestMapping("rocket")
 @RestController
 public class RocketMqController {
+
+    @Value("${rocketmq.topic}")
+    private String topic;
+
 
     @Resource
     @Lazy
     private RocketMQTemplate rocketMQTemplate;
 
-    @GetMapping("producer/")
+    @GetMapping("producer")
     public SendResult producer() {
         //一般来说发送 字符串和对象就可以了，为什么还有一个MessageBuilder
+        StudentVo studentVo = new StudentVo();
+        studentVo.setName("lu卡尔");
+        studentVo.setAge(18);
         SendResult sendResult =
-                rocketMQTemplate.syncSend("springboot-producer", new StudentVo("lu卡尔", 18));
+                rocketMQTemplate.syncSend(topic, studentVo);
         return sendResult;
     }
 
-    @GetMapping("transaction/")
+    /**
+     * rockmq事务到底怎么实现的
+     *
+     * @return
+     */
+    @GetMapping("transaction")
     public String transaction() {
         String[] tags = new String[]{"TagA", "TagB", "TagC", "TagD", "TagE"};
         for (int i = 0; i < 10; i++) {
