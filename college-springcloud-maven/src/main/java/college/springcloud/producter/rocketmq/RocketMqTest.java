@@ -9,6 +9,7 @@ import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.junit.Test;
 
@@ -146,6 +147,8 @@ public class RocketMqTest {
 
         // Subscribe one more more topics to consume.
         consumer.subscribe(TOPIC_SIMPLE, "*");
+        //两种消费模式默认集群，另外一种集群
+        consumer.setMessageModel(MessageModel.CLUSTERING);
         // Register callback to execute on arrival of messages fetched from brokers.
         consumer.registerMessageListener(new MessageListenerConcurrently() {
 
@@ -153,6 +156,7 @@ public class RocketMqTest {
             public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                                                             ConsumeConcurrentlyContext context) {
                 System.out.printf("%s Receive New Messages: %s %n", Thread.currentThread().getName(), msgs);
+                //这种是ack方式
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             }
         });

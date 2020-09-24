@@ -3,7 +3,10 @@ package college.springcloud.producter.controller;
 import college.springcloud.producter.mapper.CfClearHeaderMapper;
 import college.springcloud.producter.model.CfClearHeader;
 import college.springcloud.producter.model.SampleVo;
+import college.springcloud.producter.service.ClearHeaderService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +28,9 @@ public class SampleProducter {
     @Resource
     CfClearHeaderMapper cfClearHeaderMapper;
 
+    @Autowired
+    ClearHeaderService clearHeaderService;
+
     @GetMapping("sample")
     public SampleVo sample() {
         return new SampleVo();
@@ -39,7 +45,7 @@ public class SampleProducter {
     public Integer batchInsert() {
         List<CfClearHeader> list =
                 cfClearHeaderMapper.selectList(Wrappers.lambdaQuery(CfClearHeader.class).in(CfClearHeader::getClearId, Arrays.asList(1, 2, 3)));
-        list.stream().forEach(key-> key.setClearId(null));
+        list.stream().forEach(key -> key.setClearId(null));
         return cfClearHeaderMapper.batchInsert(list);
     }
 
@@ -47,8 +53,14 @@ public class SampleProducter {
     public Integer batchUpdate() {
         List<CfClearHeader> list =
                 cfClearHeaderMapper.selectList(Wrappers.lambdaQuery(CfClearHeader.class).in(CfClearHeader::getClearId, Arrays.asList(1, 2, 3)));
-        list.stream().forEach(t-> t.setInvoiceNo("INV2009070002"));
+        list.stream().forEach(t -> t.setInvoiceNo("INV2009070002"));
         return cfClearHeaderMapper.batchUpdateById(list);
+    }
+
+
+    @GetMapping("transaction/rollback")
+    public Integer transactionRollback() {
+        return clearHeaderService.transactionRollback();
     }
 
 }

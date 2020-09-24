@@ -1,7 +1,7 @@
 
 
 server:
-  port: 8083
+  port: 9083
   servlet:
     context-path: /
 
@@ -30,10 +30,14 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 rocketmq:
-  name-server: 192.168.138.3
+  name-server: 192.168.138.3:9876
   producer:
     group: springcloud-producter
     send-message-timeout: 5000
-  topic: springboot-producer
+  topic: springboot_producer
   consumer:
-    group:
+    group: college_consumer
+
+logging:
+  level:
+    com.alibaba.nacos.client.config.impl: WARN
