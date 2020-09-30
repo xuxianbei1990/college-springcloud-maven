@@ -11,10 +11,10 @@ spring:
   application:
     name: college-service-order
   datasource:
-    url: jdbc:mysql://10.228.81.19:38309/eop_finance_dev?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:p6spy:mysql://10.228.81.19:38309/eop_finance_dev?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
     username: root
-    password:
-    driverClassName: com.mysql.cj.jdbc.Driver
+    password: Chenfan@123.com.cn..
+    driverClassName: com.p6spy.engine.spy.P6SpyDriver
     testWhileIdle: true
     validationQuery: select 1
     testOnBorrow: false
@@ -41,3 +41,4 @@ rocketmq:
 logging:
   level:
     com.alibaba.nacos.client.config.impl: WARN
+    college.springcloud.producter.mapper: DEBUG
