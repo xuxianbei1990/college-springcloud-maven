@@ -13,10 +13,14 @@ import com.baomidou.mybatisplus.core.toolkit.support.ColumnCache;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
 import org.apache.ibatis.reflection.property.PropertyNamer;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -36,6 +40,12 @@ public class ClearHeaderService {
 
     @Resource
     CfClearHeaderMapper cfClearHeaderMapper;
+
+    @Autowired
+    private PlatformTransactionManager platformTransactionManager;
+
+    @Autowired
+    private TransactionDefinition transactionDefinition;
 
     final
     ApplicationContext applicationContext;
@@ -78,5 +88,38 @@ public class ClearHeaderService {
         Assert.notNull(columnCache, "can not find lambda cache for this property [%s] of entity [%s]",
                 fieldName, aClass.getName());
         return onlyColumn ? columnCache.getColumn() : columnCache.getColumnSelect();
+    }
+
+    public Integer transactionCode() {
+        TransactionStatus transaction = platformTransactionManager.getTransaction(transactionDefinition);
+        try {
+            CfClearHeader cfClearHeader = cfClearHeaderMapper.selectById(7);
+            cfClearHeader.setInvoiceNo("test");
+            cfClearHeaderMapper.updateById(cfClearHeader);
+            if (cfClearHeader.getInvoiceNo().equals("test")) {
+                throw new RuntimeException("tt");
+            }
+            platformTransactionManager.commit(transaction);
+        } catch (Exception e) {
+            platformTransactionManager.rollback(transaction);
+        }
+        return 999;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Integer innerTransaction() {
+        CfClearHeader cfClearHeader = cfClearHeaderMapper.selectById(7);
+        cfClearHeader.setInvoiceNo("test");
+        cfClearHeaderMapper.updateById(cfClearHeader);
+        if (cfClearHeader.getInvoiceNo().equals("test")) {
+            throw new RuntimeException("tt");
+        }
+
+        return 999;
+    }
+
+
+    public Integer transactionAop() {
+        return ((ClearHeaderService) AopContext.currentProxy()).innerTransaction();
     }
 }

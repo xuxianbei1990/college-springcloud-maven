@@ -2,6 +2,7 @@ package college.springcloud.producter.controller;
 
 import college.springcloud.producter.model.StudentVo;
 import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.spring.annotation.ExtRocketMQTemplateConfiguration;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
@@ -43,8 +44,7 @@ public class RocketMqController {
         StudentVo studentVo = new StudentVo();
         studentVo.setName("lu卡尔");
         studentVo.setAge(18);
-        SendResult sendResult =
-                rocketMQTemplate.syncSend(topic, studentVo);
+        SendResult sendResult = rocketMQTemplate.syncSend(topic, studentVo);
         return sendResult;
     }
 

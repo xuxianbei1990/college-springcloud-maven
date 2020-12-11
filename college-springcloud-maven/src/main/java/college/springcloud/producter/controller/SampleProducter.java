@@ -63,4 +63,22 @@ public class SampleProducter {
         return clearHeaderService.transactionRollback();
     }
 
+    /**
+     * 测试编程式事务
+     * @return
+     */
+    @GetMapping("transaction/code")
+    public Integer transactionCode() {
+        return clearHeaderService.transactionCode();
+    }
+
+    /**
+     * 测试内部方法事务生效
+     * @return
+     */
+    @GetMapping("transaction/aop")
+    public Integer transactionAop() {
+        return clearHeaderService.transactionAop();
+    }
+
 }
