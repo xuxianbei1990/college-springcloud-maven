@@ -2,7 +2,6 @@ package college.springcloud.producter.controller;
 
 import college.springcloud.producter.model.StudentVo;
 import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.spring.annotation.ExtRocketMQTemplateConfiguration;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
@@ -40,13 +39,45 @@ public class RocketMqController {
 
     @GetMapping("producer")
     public SendResult producer() {
-        //一般来说发送 字符串和对象就可以了，为什么还有一个MessageBuilder
         StudentVo studentVo = new StudentVo();
         studentVo.setName("lu卡尔");
         studentVo.setAge(18);
         SendResult sendResult = rocketMQTemplate.syncSend(topic, studentVo);
         return sendResult;
     }
+
+    /**
+     * 测试顺序消费，需要RocketMQMessageListener的consumeMode = ConsumeMode.ORDERLY
+     * @return
+     */
+    @GetMapping("producer/order")
+    public String producerOrder() {
+        /**
+         * 业务：每个拳皇角色完成都要发送创建订单，支付成功，完成。
+         */
+        String[] kingRoles = new String[]{"库拉2001", "八神", "草", "大蛇"};
+        for (String kingRole : kingRoles) {
+            StudentVo studentVo = new StudentVo();
+            studentVo.setOrderType(StudentVo.OrderTypeEnum.CREATE_ORDER.getKey());
+            studentVo.setName(kingRole);
+            studentVo.setAge(18);
+            //默认实现方式SelectMessageQueueByHash  第三个参数一般是唯一标识，例如订单号
+            rocketMQTemplate.syncSendOrderly(topic, studentVo, studentVo.getName());
+            System.out.println("噼啪噼啪一顿操作");
+            studentVo.setOrderType(StudentVo.OrderTypeEnum.PAY_ORDER.getKey());
+            studentVo.setName(kingRole);
+            studentVo.setAge(18);
+            rocketMQTemplate.syncSendOrderly(topic, studentVo, studentVo.getName());
+            System.out.println("QWER 点燃");
+            studentVo.setOrderType(StudentVo.OrderTypeEnum.FINISHED_ORDER.getKey());
+            studentVo.setName(kingRole);
+            studentVo.setAge(18);
+            rocketMQTemplate.syncSendOrderly(topic, studentVo, studentVo.getName());
+        }
+
+        return "result";
+    }
+
 
     /**
      * rockmq事务到底怎么实现的
