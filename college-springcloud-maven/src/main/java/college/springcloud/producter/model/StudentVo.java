@@ -17,13 +17,15 @@ public class StudentVo {
     /**
      * createOrder, payOrder, Finished
      */
-    private String orderType;
+    private OrderTypeEnum orderType;
 
     @Getter
     public enum OrderTypeEnum {
         CREATE_ORDER("CO001", "创建订单"),
         PAY_ORDER("CO002", "支付订单"),
-        FINISHED_ORDER("CO003", "完成订单");
+        FINISHED_ORDER("CO003", "完成订单"),
+        DELAY_ORDER("C0004", "延迟消费"),
+        TRACE_ORDER("C0005", "延迟消费");
 
         private String key;
         private String desc;

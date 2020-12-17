@@ -3,7 +3,7 @@ package college.springcloud.producter.config;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 
 /**
- * 失败，详见MyProxyTransactionManagementConfiguration
+ * 失败，详见@see #MyProxyTransactionManagementConfiguration
  * @author: xuxianbei
  * Date: 2020/9/21
  * Time: 16:21

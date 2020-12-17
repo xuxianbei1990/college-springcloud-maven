@@ -48,6 +48,7 @@ public class RocketMqController {
 
     /**
      * 测试顺序消费，需要RocketMQMessageListener的consumeMode = ConsumeMode.ORDERLY
+     *
      * @return
      */
     @GetMapping("producer/order")
@@ -58,18 +59,18 @@ public class RocketMqController {
         String[] kingRoles = new String[]{"库拉2001", "八神", "草", "大蛇"};
         for (String kingRole : kingRoles) {
             StudentVo studentVo = new StudentVo();
-            studentVo.setOrderType(StudentVo.OrderTypeEnum.CREATE_ORDER.getKey());
+            studentVo.setOrderType(StudentVo.OrderTypeEnum.CREATE_ORDER);
             studentVo.setName(kingRole);
             studentVo.setAge(18);
             //默认实现方式SelectMessageQueueByHash  第三个参数一般是唯一标识，例如订单号
             rocketMQTemplate.syncSendOrderly(topic, studentVo, studentVo.getName());
             System.out.println("噼啪噼啪一顿操作");
-            studentVo.setOrderType(StudentVo.OrderTypeEnum.PAY_ORDER.getKey());
+            studentVo.setOrderType(StudentVo.OrderTypeEnum.PAY_ORDER);
             studentVo.setName(kingRole);
             studentVo.setAge(18);
             rocketMQTemplate.syncSendOrderly(topic, studentVo, studentVo.getName());
             System.out.println("QWER 点燃");
-            studentVo.setOrderType(StudentVo.OrderTypeEnum.FINISHED_ORDER.getKey());
+            studentVo.setOrderType(StudentVo.OrderTypeEnum.FINISHED_ORDER);
             studentVo.setName(kingRole);
             studentVo.setAge(18);
             rocketMQTemplate.syncSendOrderly(topic, studentVo, studentVo.getName());
@@ -78,6 +79,46 @@ public class RocketMqController {
         return "result";
     }
 
+    /**
+     * 测试延迟消费
+     *
+     * @return
+     */
+    @GetMapping("producer/delay")
+    public SendResult producerDelay() {
+        SendResult sendResult;
+        StudentVo studentVo = new StudentVo();
+        studentVo.setOrderType(StudentVo.OrderTypeEnum.DELAY_ORDER);
+        studentVo.setAge(23);
+        studentVo.setName("鬼泣1代");
+        Message<?> message = MessageBuilder.withPayload(studentVo).build();
+        rocketMQTemplate.syncSend(topic, message, 500, 1);
+        studentVo.setOrderType(StudentVo.OrderTypeEnum.DELAY_ORDER);
+        studentVo.setAge(24);
+        studentVo.setName("鬼泣2代");
+        message = MessageBuilder.withPayload(studentVo).build();
+        rocketMQTemplate.syncSend(topic, message, 500, 2);
+
+        studentVo.setOrderType(StudentVo.OrderTypeEnum.DELAY_ORDER);
+        studentVo.setAge(25);
+        studentVo.setName("鬼泣3代");
+        message = MessageBuilder.withPayload(studentVo).build();
+        sendResult = rocketMQTemplate.syncSend(topic, message, 500, 3);
+        return sendResult;
+    }
+
+    /**
+     * 消息回溯
+     * @return
+     */
+    @GetMapping("producer/msg/trace")
+    public SendResult producerMsgTrace() {
+        StudentVo studentVo = new StudentVo();
+        studentVo.setOrderType(StudentVo.OrderTypeEnum.TRACE_ORDER);
+        studentVo.setAge(26);
+        studentVo.setName("鬼泣回溯");
+        return rocketMQTemplate.syncSend(topic, studentVo);
+    }
 
     /**
      * rockmq事务到底怎么实现的
