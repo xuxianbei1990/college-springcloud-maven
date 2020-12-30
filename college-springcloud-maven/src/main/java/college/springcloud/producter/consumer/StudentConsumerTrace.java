@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
  * Version:V1.0
  */
 //@Service
-@RocketMQMessageListener(topic = "${rocketmq.producer.customized-trace-topic}", consumerGroup = "${rocketmq.consumer.group}")
+@RocketMQMessageListener(topic = "${rocketmq.topic}", consumerGroup = "${rocketmq.consumer.group}",
+        selectorExpression = "98")
 public class StudentConsumerTrace implements RocketMQListener<StudentVo> {
 
     @Override

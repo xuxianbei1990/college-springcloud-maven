@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
  * Version:V1.0
  */
 @Service
-@RocketMQMessageListener(topic = "${rocketmq.topic}", consumerGroup = "${rocketmq.consumer.group}"
+@RocketMQMessageListener(topic = "${rocketmq.topic}", consumerGroup = "${rocketmq.consumer.group}",
+        selectorExpression = "97"
 //     测试顺序消费用的   , consumeMode = ConsumeMode.ORDERLY
 )
 public class StudentConsumer implements RocketMQListener<StudentVo> {

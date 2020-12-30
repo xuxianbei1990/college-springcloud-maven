@@ -108,7 +108,8 @@ public class RocketMqController {
     }
 
     /**
-     * 消息回溯
+     * 消息回溯  默认支持时间维度消息回溯
+     *
      * @return
      */
     @GetMapping("producer/msg/trace")
@@ -197,4 +198,31 @@ public class RocketMqController {
             return retState;
         }
     }
+
+    /**
+     * 结论，rocketMQ 本身不支持同一个项目里面订阅多个主题，也不支持订阅多个tag
+     * 要实现同一个订阅多个主题的话，只能在消息本身定义消息类别。
+     * 优先级队列：定义一个新主题或者tag，把消息发过去，新启动一个实例来消费，
+     *
+     * @return
+     */
+    @GetMapping("producer/msg/tag")
+    public SendResult producerMsgTag() {
+        StudentVo studentVo = new StudentVo();
+        studentVo.setOrderType(StudentVo.OrderTypeEnum.TRACE_ORDER);
+        studentVo.setAge(26);
+        studentVo.setName("鬼泣Tag97");
+        rocketMQTemplate.syncSend(topic + ":97", studentVo);
+
+        studentVo.setOrderType(StudentVo.OrderTypeEnum.TRACE_ORDER);
+        studentVo.setAge(26);
+        studentVo.setName("鬼泣Tag98");
+        rocketMQTemplate.syncSend(topic + ":98", studentVo);
+
+        studentVo.setOrderType(StudentVo.OrderTypeEnum.TRACE_ORDER);
+        studentVo.setAge(26);
+        studentVo.setName("鬼泣Tag99");
+        return rocketMQTemplate.syncSend(topic + ":99", studentVo);
+    }
+
 }
