@@ -19,4 +19,6 @@ public class NettyClientConfig {
     private int clientSocketRcvBufSize = NettySystemConfig.socketRcvbufSize;
 
     private int clientChannelMaxIdleTimeSeconds = 120;
+
+    private boolean clientCloseSocketIfTimeout = false;
 }

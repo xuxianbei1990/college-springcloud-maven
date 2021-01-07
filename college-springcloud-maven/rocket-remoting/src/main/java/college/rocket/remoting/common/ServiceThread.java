@@ -8,6 +8,7 @@ package college.rocket.remoting.common;
  */
 public abstract class ServiceThread implements Runnable {
 
+    protected volatile boolean stopped = false;
 
     protected final Thread thread;
 
