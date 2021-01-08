@@ -25,6 +25,7 @@ public class RemotingCommand {
     public static final String REMOTING_VERSION_KEY = "rocketmq.remoting.version";
     private static AtomicInteger requestId = new AtomicInteger(0);
     private String remark;
+    private static SerializeType serializeTypeConfigInThisServer = SerializeType.JSON;
 
     private int opaque = requestId.getAndIncrement();
 
@@ -77,5 +78,9 @@ public class RemotingCommand {
         }
 
         return RemotingCommandType.REQUEST_COMMAND;
+    }
+
+    public static SerializeType getSerializeTypeConfigInThisServer() {
+        return serializeTypeConfigInThisServer;
     }
 }

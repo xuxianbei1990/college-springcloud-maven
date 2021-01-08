@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
         selectorExpression = "97"
 //     测试顺序消费用的   , consumeMode = ConsumeMode.ORDERLY
 )
+//以接口方式实现主要是为了回调
 public class StudentConsumer implements RocketMQListener<StudentVo> {
     @Override
     public void onMessage(StudentVo message) {

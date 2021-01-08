@@ -9,14 +9,11 @@ import io.netty.channel.ChannelHandlerContext;
  * Time: 16:47
  * Version:V1.0
  */
-public class AsyncNettyRequestProcessor implements NettyRequestProcessor {
-    @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
-        return null;
+public abstract class AsyncNettyRequestProcessor implements NettyRequestProcessor {
+
+    public void asyncProcessRequest(ChannelHandlerContext ctx, RemotingCommand request, RemotingResponseCallback responseCallback) throws Exception {
+        RemotingCommand response = processRequest(ctx, request);
+        responseCallback.callback(response);
     }
 
-    @Override
-    public boolean rejectRequest() {
-        return false;
-    }
 }

@@ -12,7 +12,7 @@ import lombok.Data;
 @Data
 public class ClientConfig {
 
-    private String namesrvAddr = "localhost:9876";/*NameServerAddressUtils.getNameServerAddresses();*/
+    private String namesrvAddr = "192.168.138.3:9876";/*NameServerAddressUtils.getNameServerAddresses();*/
 
     private String clientIP = RemotingUtil.getLocalAddress();
 

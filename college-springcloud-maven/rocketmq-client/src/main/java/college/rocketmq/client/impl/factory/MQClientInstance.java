@@ -2,6 +2,7 @@ package college.rocketmq.client.impl.factory;
 
 import college.rocket.common.MixAll;
 import college.rocket.common.ServiceState;
+import college.rocket.common.protocol.route.BrokerData;
 import college.rocket.common.protocol.route.TopicRouteData;
 import college.rocket.remoting.RPCHook;
 import college.rocket.remoting.exception.RemotingException;
@@ -17,6 +18,7 @@ import college.rocketmq.client.impl.producer.MQProducerInner;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -46,6 +48,8 @@ public class MQClientInstance {
     private final ClientConfig clientConfig;
     private final Lock lockNamesrv = new ReentrantLock();
     private final ConcurrentMap<String/* Topic */, TopicRouteData> topicRouteTable = new ConcurrentHashMap<String, TopicRouteData>();
+    private final ConcurrentMap<String/* Broker Name */, HashMap<Long/* brokerId */, String/* address */>> brokerAddrTable =
+            new ConcurrentHashMap<String, HashMap<Long, String>>();
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -75,7 +79,7 @@ public class MQClientInstance {
                     this.serviceState = ServiceState.START_FAILED;
                     //配置netty信息，未启动
                     mQClientAPIImpl.start();
-                    //启动周期任务
+                    //启动周期任务 也是启动client Broker
                     this.startScheduledTask();
                     //只是从队列中拉取消息分发，不是从broker中拉取消息
                     pullMessageService.start();
@@ -147,8 +151,16 @@ public class MQClientInstance {
                         }
                         if (changed) {
                             TopicRouteData cloneTopicRouteData = topicRouteData.cloneTopicRouteData();
-                        }
 
+                            for (BrokerData bd : topicRouteData.getBrokerDatas()) {
+                                this.brokerAddrTable.put(bd.getBrokerName(), bd.getBrokerAddrs());
+                            }
+                            log.info("topicRouteTable.put. Topic = {}, TopicRouteData[{}]", topic, cloneTopicRouteData);
+                            this.topicRouteTable.put(topic, cloneTopicRouteData);
+                            return true;
+                        }
+                    } else {
+                        log.warn("updateTopicRouteInfoFromNameServer, getTopicRouteInfoFromNameServer return null, Topic: {}", topic);
                     }
                 } catch (MQClientException e) {
                     if (!topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
@@ -157,7 +169,11 @@ public class MQClientInstance {
                 } catch (RemotingException e) {
                     log.error("updateTopicRouteInfoFromNameServer Exception", e);
                     throw new IllegalStateException(e);
+                } finally {
+                    this.lockNamesrv.unlock();
                 }
+            } else {
+                log.warn("updateTopicRouteInfoFromNameServer tryLock timeout {}ms", LOCK_TIMEOUT_MILLIS);
             }
         } catch (InterruptedException e) {
             log.warn("updateTopicRouteInfoFromNameServer Exception", e);
@@ -167,7 +183,7 @@ public class MQClientInstance {
 
     private boolean topicRouteDataIsChange(TopicRouteData olddata, TopicRouteData nowdata) {
 //        if (olddata == null || nowdata == null)
-            return true;
+        return true;
 
     }
 

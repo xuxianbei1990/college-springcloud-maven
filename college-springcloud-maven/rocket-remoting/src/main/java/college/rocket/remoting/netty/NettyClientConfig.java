@@ -17,8 +17,12 @@ public class NettyClientConfig {
 
     private int clientSocketSndBufSize = NettySystemConfig.socketSndbufSize;
     private int clientSocketRcvBufSize = NettySystemConfig.socketRcvbufSize;
+    private int clientOnewaySemaphoreValue = NettySystemConfig.CLIENT_ONEWAY_SEMAPHORE_VALUE;
+    private int clientAsyncSemaphoreValue = NettySystemConfig.CLIENT_ASYNC_SEMAPHORE_VALUE;
 
     private int clientChannelMaxIdleTimeSeconds = 120;
 
     private boolean clientCloseSocketIfTimeout = false;
+
+
 }

@@ -62,6 +62,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     public NettyRemotingClient(final NettyClientConfig nettyClientConfig,
                                final ChannelEventListener channelEventListener) {
+        super(nettyClientConfig.getClientOnewaySemaphoreValue(), nettyClientConfig.getClientAsyncSemaphoreValue());
         this.nettyClientConfig = nettyClientConfig;
 
         //定义了客户端建立连接的线程数是1.
@@ -339,7 +340,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         return channelEventListener;
     }
 
-    @Slf4j
+
     class NettyConnectManageHandler extends ChannelDuplexHandler {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {

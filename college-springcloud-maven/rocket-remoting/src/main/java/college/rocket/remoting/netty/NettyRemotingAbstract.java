@@ -1,16 +1,15 @@
 package college.rocket.remoting.netty;
 
 import college.rocket.remoting.ChannelEventListener;
+import college.rocket.remoting.common.Pair;
 import college.rocket.remoting.common.RemotingHelper;
 import college.rocket.remoting.common.ServiceThread;
 import college.rocket.remoting.protocol.RemotingCommand;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.concurrent.*;
 
 /**
  * @author: xuxianbei
@@ -22,11 +21,23 @@ import java.util.concurrent.TimeUnit;
 public abstract class NettyRemotingAbstract {
 
     protected final NettyEventExecutor nettyEventExecutor = new NettyEventExecutor();
+    protected final Semaphore semaphoreOneway;
+    protected final Semaphore semaphoreAsync;
+
+    protected Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
 
     public abstract ChannelEventListener getChannelEventListener();
 
     protected final ConcurrentMap<Integer /* opaque */, ResponseFuture> responseTable =
             new ConcurrentHashMap(256);
+
+    protected final HashMap<Integer/* request code */, Pair<NettyRequestProcessor, ExecutorService>> processorTable =
+            new HashMap<Integer, Pair<NettyRequestProcessor, ExecutorService>>(64);
+
+    public NettyRemotingAbstract(final int permitsOneway, final int permitsAsync) {
+        this.semaphoreOneway = new Semaphore(permitsOneway, true);
+        this.semaphoreAsync = new Semaphore(permitsAsync, true);
+    }
 
     public void putNettyEvent(final NettyEvent event) {
         this.nettyEventExecutor.putNettyEvent(event);
@@ -96,9 +107,9 @@ public abstract class NettyRemotingAbstract {
         final RemotingCommand cmd = msg;
         if (cmd != null) {
             switch (cmd.getType()) {
-                //心跳  生产者消息
+                // 建立连接
                 case REQUEST_COMMAND:
-//                    processRequestCommand(ctx, cmd);
+                    processRequestCommand(ctx, cmd);
                     break;
                 //消费
                 case RESPONSE_COMMAND:
@@ -108,6 +119,11 @@ public abstract class NettyRemotingAbstract {
                     break;
             }
         }
+    }
+
+    protected void processRequestCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {
+        final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
+        final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessor : matched;
     }
 
     public void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {

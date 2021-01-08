@@ -1,7 +1,9 @@
 package college.rocketmq.client.impl;
 
 import college.rocket.remoting.netty.AsyncNettyRequestProcessor;
+import college.rocket.remoting.protocol.RemotingCommand;
 import college.rocketmq.client.impl.factory.MQClientInstance;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author: xuxianbei
@@ -15,5 +17,15 @@ public class ClientRemotingProcessor extends AsyncNettyRequestProcessor {
 
     public ClientRemotingProcessor(final MQClientInstance mqClientFactory) {
         this.mqClientFactory = mqClientFactory;
+    }
+
+    @Override
+    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
+        return null;
+    }
+
+    @Override
+    public boolean rejectRequest() {
+        return false;
     }
 }
