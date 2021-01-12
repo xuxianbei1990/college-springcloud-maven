@@ -42,7 +42,7 @@ public class NamesrvController {
 
         this.brokerHousekeepingService = new BrokerHousekeepingService(this);
         this.configuration = new Configuration(this.namesrvConfig, this.nettyServerConfig);
-        return false;
+        return true;
     }
 
     public void start() {

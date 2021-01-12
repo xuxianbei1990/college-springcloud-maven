@@ -19,6 +19,7 @@ import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -42,6 +43,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     private NettyServerHandler serverHandler;
     private final EventLoopGroup eventLoopGroupBoss;
     private final EventLoopGroup eventLoopGroupSelector;
+    private int port = 0;
 
     private static final String HANDSHAKE_HANDLER_NAME = "handshakeHandler";
     private HandshakeHandler handshakeHandler;
@@ -90,6 +92,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 }
             });
         }
+
 
     }
 
@@ -177,7 +180,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                                         //处理安全的
                                         .addLast(defaultEventExecutorGroup, HANDSHAKE_HANDLER_NAME, handshakeHandler)
                                         .addLast(defaultEventExecutorGroup,
-                                                encoder, new NettyDecoder(),
+                                                new NettyDecoder(), encoder,
                                                 /**
                                                  * 心跳机制
                                                  * IdleStateHandler 对不活跃的通道，进行处理避免资源浪费 通过 userEventTriggered
@@ -189,6 +192,17 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                             }
                         });
 
+        try {
+            ChannelFuture sync = this.serverBootstrap.bind().sync();
+            InetSocketAddress addr = (InetSocketAddress) sync.channel().localAddress();
+            this.port = addr.getPort();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("this.serverBootstrap.bind().sync() InterruptedException", e);
+        }
+
+        if (this.channelEventListener != null) {
+            this.nettyEventExecutor.start();
+        }
 
     }
 
@@ -205,7 +219,16 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-
+            msg.markReaderIndex();
+            msg.resetReaderIndex();
+            try {
+                // Remove this handler
+                ctx.pipeline().remove(this);
+            } catch (NoSuchElementException e) {
+                log.error("Error while removing HandshakeHandler", e);
+            }
+            // Hand over this message to the next .
+            ctx.fireChannelRead(msg.retain());
         }
     }
 

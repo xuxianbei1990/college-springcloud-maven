@@ -5,6 +5,7 @@ import college.rocket.remoting.common.Pair;
 import college.rocket.remoting.common.RemotingHelper;
 import college.rocket.remoting.common.ServiceThread;
 import college.rocket.remoting.protocol.RemotingCommand;
+import college.rocket.remoting.protocol.RemotingSysResponseCode;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -124,6 +125,44 @@ public abstract class NettyRemotingAbstract {
     protected void processRequestCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {
         final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
         final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessor : matched;
+        //其实就是消息ID
+        final int opaque = cmd.getOpaque();
+        if (pair != null) {
+            Runnable run = () -> {
+                try {
+                    final RemotingResponseCallback callback = (response) -> {
+
+                    };
+
+                    if (pair.getObject1() instanceof AsyncNettyRequestProcessor) {
+                        AsyncNettyRequestProcessor processor = (AsyncNettyRequestProcessor) pair.getObject1();
+                        processor.asyncProcessRequest(ctx, cmd, callback);
+                    } else {
+                        NettyRequestProcessor processor = pair.getObject1();
+                        RemotingCommand response = processor.processRequest(ctx, cmd);
+                        callback.callback(response);
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            };
+
+            //如果拒绝， 就返回系统繁忙
+            if (pair.getObject1().rejectRequest()) {
+                final RemotingCommand response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY,
+                        "[REJECTREQUEST]system busy, start flow control for a while");
+                response.setOpaque(opaque);
+                ctx.writeAndFlush(response);
+                return;
+            }
+            try {
+                final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
+                pair.getObject2().submit(requestTask);
+            } catch (RejectedExecutionException e) {
+
+            }
+
+        }
     }
 
     public void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {

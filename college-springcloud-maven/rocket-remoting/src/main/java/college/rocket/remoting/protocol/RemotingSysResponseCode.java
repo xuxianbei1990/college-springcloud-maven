@@ -9,4 +9,6 @@ package college.rocket.remoting.protocol;
 public class RemotingSysResponseCode {
 
     public static final int SUCCESS = 0;
+
+    public static final int SYSTEM_BUSY = 2;
 }

@@ -26,20 +26,106 @@ public class RemotingCommand {
     private static AtomicInteger requestId = new AtomicInteger(0);
     private String remark;
     private static SerializeType serializeTypeConfigInThisServer = SerializeType.JSON;
-
+    private SerializeType serializeTypeCurrentRPC = serializeTypeConfigInThisServer;
     private int opaque = requestId.getAndIncrement();
+
+    public static RemotingCommand createResponseCommand(int systemBusy, String s) {
+        return null;
+    }
 
     public ByteBuffer encodeHeader() {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
 
+    private byte[] headerEncode() {
+//        this.makeCustomHeaderToNet();
+
+        return RemotingSerializable.encode(this);
+    }
+
     public ByteBuffer encodeHeader(final int bodyLength) {
+        // 1> header length size
+        int length = 4;
+
+        // 2> header data length
+        byte[] headerData;
+        headerData = this.headerEncode();
+
+        length += headerData.length;
+
+        // 3> body data length
+        length += bodyLength;
+
+        ByteBuffer result = ByteBuffer.allocate(4 + length - bodyLength);
+
+        // length
+        result.putInt(length);
+
+        // header length
+        result.put(markProtocolType(headerData.length, serializeTypeCurrentRPC));
+
+        // header data
+        result.put(headerData);
+
+        result.flip();
+
+        return result;
+    }
+
+    public static byte[] markProtocolType(int source, SerializeType type) {
+        byte[] result = new byte[4];
+
+        result[0] = type.getCode();
+        result[1] = (byte) ((source >> 16) & 0xFF);
+        result[2] = (byte) ((source >> 8) & 0xFF);
+        result[3] = (byte) (source & 0xFF);
+        return result;
+    }
+
+    public static RemotingCommand decode(final ByteBuffer byteBuffer) {
+        int length = byteBuffer.limit();
+        int oriHeaderLen = byteBuffer.getInt();
+        int headerLength = getHeaderLength(oriHeaderLen);
+
+        byte[] headerData = new byte[headerLength];
+        byteBuffer.get(headerData);
+
+        RemotingCommand cmd = headerDecode(headerData, getProtocolType(oriHeaderLen));
+
+        int bodyLength = length - 4 - headerLength;
+        byte[] bodyData = null;
+        if (bodyLength > 0) {
+            bodyData = new byte[bodyLength];
+            byteBuffer.get(bodyData);
+        }
+        cmd.body = bodyData;
+
+        return cmd;
+    }
+
+    private static RemotingCommand headerDecode(byte[] headerData, SerializeType type) {
+        switch (type) {
+            case JSON:
+                RemotingCommand resultJson = RemotingSerializable.decode(headerData, RemotingCommand.class);
+                resultJson.setSerializeTypeCurrentRPC(type);
+                return resultJson;
+//            case ROCKETMQ:
+//                RemotingCommand resultRMQ = RocketMQSerializable.rocketMQProtocolDecode(headerData);
+//                resultRMQ.setSerializeTypeCurrentRPC(type);
+//                return resultRMQ;
+            default:
+                break;
+        }
 
         return null;
     }
 
-    public static RemotingCommand decode(final ByteBuffer byteBuffer) {
-        return null;
+
+    public static SerializeType getProtocolType(int source) {
+        return SerializeType.valueOf((byte) ((source >> 24) & 0xFF));
+    }
+    public static int getHeaderLength(int length) {
+        return length & 0xFFFFFF;
     }
 
     public static RemotingCommand createRequestCommand(int code, CommandCustomHeader customHeader) {

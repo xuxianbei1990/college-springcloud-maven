@@ -22,4 +22,16 @@ public class RemotingSerializable {
     public static <T> T fromJson(String json, Class<T> classOfT) {
         return JSON.parseObject(json, classOfT);
     }
+
+    public static String toJson(final Object obj, boolean prettyFormat) {
+        return JSON.toJSONString(obj, prettyFormat);
+    }
+
+    public static byte[] encode(final Object obj) {
+        final String json = toJson(obj, false);
+        if (json != null) {
+            return json.getBytes(CHARSET_UTF8);
+        }
+        return null;
+    }
 }
