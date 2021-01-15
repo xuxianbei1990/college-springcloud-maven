@@ -5,9 +5,11 @@ import college.rocket.common.ThreadFactoryImpl;
 import college.rocket.common.namesrv.NamesrvConfig;
 import college.rocket.namesrv.processor.DefaultRequestProcessor;
 import college.rocket.namesrv.routeinfo.BrokerHousekeepingService;
+import college.rocket.namesrv.routeinfo.RouteInfoManager;
 import college.rocket.remoting.RemotingServer;
 import college.rocket.remoting.netty.NettyRemotingServer;
 import college.rocket.remoting.netty.NettyServerConfig;
+import lombok.Data;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,6 +20,7 @@ import java.util.concurrent.Executors;
  * Time: 10:57
  * Version:V1.0
  */
+@Data
 public class NamesrvController {
 
     private RemotingServer remotingServer;
@@ -26,12 +29,14 @@ public class NamesrvController {
 
     private BrokerHousekeepingService brokerHousekeepingService;
     private ExecutorService remotingExecutor;
+    private final RouteInfoManager routeInfoManager;
 
     private Configuration configuration;
 
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
         this.namesrvConfig = namesrvConfig;
         this.nettyServerConfig = nettyServerConfig;
+        this.routeInfoManager = new RouteInfoManager();
     }
 
     public boolean initialize() {
@@ -42,6 +47,8 @@ public class NamesrvController {
 
         this.brokerHousekeepingService = new BrokerHousekeepingService(this);
         this.configuration = new Configuration(this.namesrvConfig, this.nettyServerConfig);
+
+        this.registerProcessor();
         return true;
     }
 

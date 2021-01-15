@@ -60,6 +60,10 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     private final Lock lockChannelTables = new ReentrantLock();
     private final ConcurrentMap<String /* addr */, ChannelWrapper> channelTables = new ConcurrentHashMap();
 
+    public NettyRemotingClient(final NettyClientConfig nettyClientConfig) {
+        this(nettyClientConfig, null);
+    }
+
     public NettyRemotingClient(final NettyClientConfig nettyClientConfig,
                                final ChannelEventListener channelEventListener) {
         super(nettyClientConfig.getClientOnewaySemaphoreValue(), nettyClientConfig.getClientAsyncSemaphoreValue());
@@ -215,7 +219,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         if (null == addr) {
             return getAndCreateNameserverChannel();
         }
-        return null;
+        return this.createChannel(addr);
     }
 
     private Channel getAndCreateNameserverChannel() throws RemotingConnectException, InterruptedException {
@@ -441,6 +445,11 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                 this.namesrvAddrList.set(addrs);
             }
         }
+    }
+
+    @Override
+    public List<String> getNameServerAddressList() {
+        return this.namesrvAddrList.get();
     }
 
 }

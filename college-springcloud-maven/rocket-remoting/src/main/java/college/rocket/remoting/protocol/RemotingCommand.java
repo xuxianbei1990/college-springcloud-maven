@@ -19,6 +19,7 @@ public class RemotingCommand {
     private static volatile int configVersion = -1;
     private transient CommandCustomHeader customHeader;
     private static final int RPC_TYPE = 0;
+    private static final int RPC_ONEWAY = 1;
     private int code;
     private int version = 0;
     private int flag = 0;
@@ -33,9 +34,24 @@ public class RemotingCommand {
         return null;
     }
 
+    public static RemotingCommand createResponseCommand(Class<? extends CommandCustomHeader> classHeader) {
+        return createResponseCommand(RemotingSysResponseCode.SYSTEM_ERROR, "not set any response code", classHeader);
+    }
+
     public ByteBuffer encodeHeader() {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
+
+    public static RemotingCommand createResponseCommand(int code, String remark,
+                                                        Class<? extends CommandCustomHeader> classHeader) {
+        RemotingCommand cmd = new RemotingCommand();
+        cmd.markResponseType();
+        cmd.setCode(code);
+        cmd.setRemark(remark);
+        setCmdVersion(cmd);
+        return cmd;
+    }
+
 
     private byte[] headerEncode() {
 //        this.makeCustomHeaderToNet();
@@ -80,6 +96,11 @@ public class RemotingCommand {
         result[2] = (byte) ((source >> 8) & 0xFF);
         result[3] = (byte) (source & 0xFF);
         return result;
+    }
+
+    public void markResponseType() {
+        int bits = 1 << RPC_TYPE;
+        this.flag |= bits;
     }
 
     public static RemotingCommand decode(final ByteBuffer byteBuffer) {
@@ -158,6 +179,12 @@ public class RemotingCommand {
         return (this.flag & bits) == bits;
     }
 
+    public boolean isOnewayRPC() {
+        int bits = 1 << RPC_ONEWAY;
+        return (this.flag & bits) == bits;
+    }
+
+
     public RemotingCommandType getType() {
         if (this.isResponseType()) {
             return RemotingCommandType.RESPONSE_COMMAND;
@@ -168,5 +195,15 @@ public class RemotingCommand {
 
     public static SerializeType getSerializeTypeConfigInThisServer() {
         return serializeTypeConfigInThisServer;
+    }
+
+    public Object decodeCommandCustomHeader(Class<? extends CommandCustomHeader> classHeader) {
+        CommandCustomHeader objectHeader;
+        try {
+            objectHeader = classHeader.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            return null;
+        }
+        return objectHeader;
     }
 }

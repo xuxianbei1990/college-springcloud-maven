@@ -16,4 +16,8 @@ public class BrokerData {
     private String brokerName;
 
     private HashMap<Long/* brokerId */, String/* broker address */> brokerAddrs;
+
+    public BrokerData(String clusterName, String brokerName, HashMap<Long, String> longStringHashMap) {
+
+    }
 }

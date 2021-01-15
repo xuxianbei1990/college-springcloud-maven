@@ -9,4 +9,6 @@ package college.rocket.common.protocol;
 public class RequestCode {
 
     public static final int GET_ROUTEINFO_BY_TOPIC = 105;
+
+    public static final int REGISTER_BROKER = 103;
 }

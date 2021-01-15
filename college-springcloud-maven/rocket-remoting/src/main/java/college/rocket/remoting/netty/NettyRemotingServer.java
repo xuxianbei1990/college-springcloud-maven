@@ -2,6 +2,7 @@ package college.rocket.remoting.netty;
 
 import college.rocket.remoting.ChannelEventListener;
 import college.rocket.remoting.RemotingServer;
+import college.rocket.remoting.common.Pair;
 import college.rocket.remoting.common.RemotingHelper;
 import college.rocket.remoting.common.RemotingUtil;
 import college.rocket.remoting.protocol.RemotingCommand;
@@ -208,7 +209,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void registerDefaultProcessor(NettyRequestProcessor processor, ExecutorService executor) {
-
+        this.defaultRequestProcessor = new Pair(processor, executor);
     }
 
     /**

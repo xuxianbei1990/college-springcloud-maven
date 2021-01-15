@@ -15,6 +15,8 @@ import java.util.List;
  */
 public interface RemotingClient extends RemotingService {
 
+    List<String> getNameServerAddressList();
+
     void updateNameServerAddressList(final List<String> addrs);
 
     RemotingCommand invokeSync(final String addr, final RemotingCommand request,

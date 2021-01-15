@@ -10,4 +10,5 @@ public class MixAll {
 
     public static final String CLIENT_INNER_PRODUCER_GROUP = "CLIENT_INNER_PRODUCER";
     public static final String RETRY_GROUP_TOPIC_PREFIX = "%RETRY%";
+    public static final long MASTER_ID = 0L;
 }

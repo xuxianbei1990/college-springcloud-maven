@@ -23,6 +23,14 @@ public class RemotingSerializable {
         return JSON.parseObject(json, classOfT);
     }
 
+    public byte[] encode() {
+        final String json = this.toJson();
+        if (json != null) {
+            return json.getBytes(CHARSET_UTF8);
+        }
+        return null;
+    }
+
     public static String toJson(final Object obj, boolean prettyFormat) {
         return JSON.toJSONString(obj, prettyFormat);
     }
@@ -33,5 +41,13 @@ public class RemotingSerializable {
             return json.getBytes(CHARSET_UTF8);
         }
         return null;
+    }
+
+    public String toJson() {
+        return toJson(false);
+    }
+
+    public String toJson(final boolean prettyFormat) {
+        return toJson(this, prettyFormat);
     }
 }

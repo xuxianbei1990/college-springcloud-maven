@@ -131,10 +131,24 @@ public abstract class NettyRemotingAbstract {
             Runnable run = () -> {
                 try {
                     final RemotingResponseCallback callback = (response) -> {
-
+                        if (!cmd.isOnewayRPC()) {
+                            if (response != null) {
+                                response.setOpaque(opaque);
+                                response.markResponseType();
+                                try {
+                                    ctx.writeAndFlush(response);
+                                } catch (Throwable e) {
+                                    log.error("process request over, but response failed", e);
+                                    log.error(cmd.toString());
+                                    log.error(response.toString());
+                                }
+                            } else {
+                            }
+                        }
                     };
 
                     if (pair.getObject1() instanceof AsyncNettyRequestProcessor) {
+                        //本身就是异步实现的
                         AsyncNettyRequestProcessor processor = (AsyncNettyRequestProcessor) pair.getObject1();
                         processor.asyncProcessRequest(ctx, cmd, callback);
                     } else {
@@ -161,7 +175,13 @@ public abstract class NettyRemotingAbstract {
             } catch (RejectedExecutionException e) {
 
             }
-
+        } else {
+            String error = " request type " + cmd.getCode() + " not supported";
+            final RemotingCommand response =
+                    RemotingCommand.createResponseCommand(RemotingSysResponseCode.REQUEST_CODE_NOT_SUPPORTED, error);
+            response.setOpaque(opaque);
+            ctx.writeAndFlush(response);
+            log.error(RemotingHelper.parseChannelRemoteAddr(ctx.channel()) + error);
         }
     }
 
