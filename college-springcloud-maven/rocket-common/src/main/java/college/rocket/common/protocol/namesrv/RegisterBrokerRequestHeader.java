@@ -1,6 +1,7 @@
 package college.rocket.common.protocol.namesrv;
 
 import college.rocket.remoting.CommandCustomHeader;
+import college.rocket.remoting.exception.RemotingCommandException;
 import lombok.Data;
 
 /**
@@ -23,4 +24,9 @@ public class RegisterBrokerRequestHeader implements CommandCustomHeader {
     private Integer bodyCrc32 = 0;
 
     private boolean compressed;
+
+    @Override
+    public void checkFields() throws RemotingCommandException {
+
+    }
 }

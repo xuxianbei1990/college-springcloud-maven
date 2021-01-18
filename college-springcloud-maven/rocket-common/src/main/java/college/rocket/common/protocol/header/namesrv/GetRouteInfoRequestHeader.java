@@ -1,6 +1,7 @@
 package college.rocket.common.protocol.header.namesrv;
 
 import college.rocket.remoting.CommandCustomHeader;
+import college.rocket.remoting.exception.RemotingCommandException;
 import lombok.Data;
 
 /**
@@ -12,4 +13,9 @@ import lombok.Data;
 @Data
 public class GetRouteInfoRequestHeader implements CommandCustomHeader {
     private String topic;
+
+    @Override
+    public void checkFields() throws RemotingCommandException {
+
+    }
 }

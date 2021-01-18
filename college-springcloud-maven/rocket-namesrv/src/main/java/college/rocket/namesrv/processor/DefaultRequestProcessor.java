@@ -84,7 +84,11 @@ public class DefaultRequestProcessor extends AsyncNettyRequestProcessor implemen
                 registerBrokerBody.getFilterServerList(),
                 ctx.channel());
 
-        return null;
+//        responseHeader.setHaServerAddr(result.getHaServerAddr());
+        responseHeader.setMasterAddr(result.getMasterAddr());
+        response.setCode(ResponseCode.SUCCESS);
+        response.setRemark(null);
+        return response;
     }
 
     private boolean checksum(ChannelHandlerContext ctx, RemotingCommand request, RegisterBrokerRequestHeader requestHeader) {
@@ -99,7 +103,7 @@ public class DefaultRequestProcessor extends AsyncNettyRequestProcessor implemen
         return true;
     }
 
-    private RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx, RemotingCommand request) {
+    private RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
         final GetRouteInfoRequestHeader requestHeader =
                 (GetRouteInfoRequestHeader) request.decodeCommandCustomHeader(GetRouteInfoRequestHeader.class);

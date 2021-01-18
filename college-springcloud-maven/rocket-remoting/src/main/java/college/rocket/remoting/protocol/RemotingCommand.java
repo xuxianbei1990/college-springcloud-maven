@@ -1,9 +1,17 @@
 package college.rocket.remoting.protocol;
 
 import college.rocket.remoting.CommandCustomHeader;
+import college.rocket.remoting.annotation.CFNotNull;
+import college.rocket.remoting.exception.RemotingCommandException;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -13,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Version:V1.0
  */
 @Data
+@Slf4j
 public class RemotingCommand {
 
     private transient byte[] body;
@@ -25,8 +34,22 @@ public class RemotingCommand {
     private int flag = 0;
     public static final String REMOTING_VERSION_KEY = "rocketmq.remoting.version";
     private static AtomicInteger requestId = new AtomicInteger(0);
+    private static final Map<Class<? extends CommandCustomHeader>, Field[]> CLASS_HASH_MAP = new HashMap();
+    private HashMap<String, String> extFields;
     private String remark;
     private static SerializeType serializeTypeConfigInThisServer = SerializeType.JSON;
+
+    private static final String STRING_CANONICAL_NAME = String.class.getCanonicalName();
+    private static final String DOUBLE_CANONICAL_NAME_1 = Double.class.getCanonicalName();
+    private static final String DOUBLE_CANONICAL_NAME_2 = double.class.getCanonicalName();
+    private static final String INTEGER_CANONICAL_NAME_1 = Integer.class.getCanonicalName();
+    private static final String INTEGER_CANONICAL_NAME_2 = int.class.getCanonicalName();
+    private static final String LONG_CANONICAL_NAME_1 = Long.class.getCanonicalName();
+    private static final String LONG_CANONICAL_NAME_2 = long.class.getCanonicalName();
+    private static final String BOOLEAN_CANONICAL_NAME_1 = Boolean.class.getCanonicalName();
+    private static final String BOOLEAN_CANONICAL_NAME_2 = boolean.class.getCanonicalName();
+    private static final Map<Field, Boolean> NULLABLE_FIELD_CACHE = new HashMap<Field, Boolean>();
+    private static final Map<Class, String> CANONICAL_NAME_CACHE = new HashMap<Class, String>();
     private SerializeType serializeTypeCurrentRPC = serializeTypeConfigInThisServer;
     private int opaque = requestId.getAndIncrement();
 
@@ -49,14 +72,61 @@ public class RemotingCommand {
         cmd.setCode(code);
         cmd.setRemark(remark);
         setCmdVersion(cmd);
+        if (classHeader != null) {
+            try {
+                CommandCustomHeader objectHeader = classHeader.newInstance();
+                cmd.customHeader = objectHeader;
+            } catch (InstantiationException | IllegalAccessException e) {
+                return null;
+            }
+        }
         return cmd;
     }
 
 
     private byte[] headerEncode() {
-//        this.makeCustomHeaderToNet();
-
+        this.makeCustomHeaderToNet();
         return RemotingSerializable.encode(this);
+    }
+
+    public void makeCustomHeaderToNet() {
+        if (this.customHeader != null) {
+            Field[] fields = getClazzFields(customHeader.getClass());
+            if (null == this.extFields) {
+                //难道没有并发问题？ 没有，因为每个Command都是自己创建的，所以不会有问题
+                this.extFields = new HashMap<String, String>();
+            }
+
+            for (Field field : fields) {
+                if (!Modifier.isStatic(field.getModifiers())) {
+                    String name = field.getName();
+                    if (!name.startsWith("this")) {
+                        Object value = null;
+                        try {
+                            field.setAccessible(true);
+                            value = field.get(this.customHeader);
+                        } catch (Exception e) {
+                            log.error("Failed to access field [{}]", name, e);
+                        }
+
+                        if (value != null) {
+                            this.extFields.put(name, value.toString());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private Field[] getClazzFields(Class<? extends CommandCustomHeader> classHeader) {
+        Field[] field = CLASS_HASH_MAP.get(classHeader);
+        if (field == null) {
+            field = classHeader.getDeclaredFields();
+            synchronized (CLASS_HASH_MAP) {
+                CLASS_HASH_MAP.put(classHeader, field);
+            }
+        }
+        return field;
     }
 
     public ByteBuffer encodeHeader(final int bodyLength) {
@@ -124,7 +194,8 @@ public class RemotingCommand {
         return cmd;
     }
 
-    private static RemotingCommand headerDecode(byte[] headerData, SerializeType type) {
+    private static RemotingCommand
+    headerDecode(byte[] headerData, SerializeType type) {
         switch (type) {
             case JSON:
                 RemotingCommand resultJson = RemotingSerializable.decode(headerData, RemotingCommand.class);
@@ -145,6 +216,7 @@ public class RemotingCommand {
     public static SerializeType getProtocolType(int source) {
         return SerializeType.valueOf((byte) ((source >> 24) & 0xFF));
     }
+
     public static int getHeaderLength(int length) {
         return length & 0xFFFFFF;
     }
@@ -197,13 +269,86 @@ public class RemotingCommand {
         return serializeTypeConfigInThisServer;
     }
 
-    public Object decodeCommandCustomHeader(Class<? extends CommandCustomHeader> classHeader) {
+    public Object decodeCommandCustomHeader(Class<? extends CommandCustomHeader> classHeader) throws RemotingCommandException {
         CommandCustomHeader objectHeader;
         try {
             objectHeader = classHeader.newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
             return null;
         }
+        /**
+         * {brokerId=0, bodyCrc32=376108730, clusterName=DefaultCluster, brokerAddr=10.228.89.4:8888,
+         * compressed=false, brokerName=DEFAULT_BROKER}
+         * 我不太理解为什么要这么做？原始对象本来就可以序列化字符串。为什么把对象通过反射取他的字段让后map中去？
+         */
+        if (this.extFields != null) {
+            Field[] fields = getClazzFields(classHeader);
+            for (Field field : fields) {
+                if (!Modifier.isStatic(field.getModifiers())) {
+                    String fieldName = field.getName();
+                    if (!fieldName.startsWith("this")) {
+                        try {
+                            String value = this.extFields.get(fieldName);
+                            if (null == value) {
+                                if (!isFieldNullable(field)) {
+                                    throw new RemotingCommandException("the custom field <" + fieldName + "> is null");
+                                }
+                                continue;
+                            }
+
+                            field.setAccessible(true);
+                            // 一般是这么写的 field.getType().equals(String.class)，没看明白为什么这些？
+                            String type = getCanonicalName(field.getType());
+                            Object valueParsed;
+
+                            if (type.equals(STRING_CANONICAL_NAME)) {
+                                valueParsed = value;
+                            } else if (type.equals(INTEGER_CANONICAL_NAME_1) || type.equals(INTEGER_CANONICAL_NAME_2)) {
+                                valueParsed = Integer.parseInt(value);
+                            } else if (type.equals(LONG_CANONICAL_NAME_1) || type.equals(LONG_CANONICAL_NAME_2)) {
+                                valueParsed = Long.parseLong(value);
+                            } else if (type.equals(BOOLEAN_CANONICAL_NAME_1) || type.equals(BOOLEAN_CANONICAL_NAME_2)) {
+                                valueParsed = Boolean.parseBoolean(value);
+                            } else if (type.equals(DOUBLE_CANONICAL_NAME_1) || type.equals(DOUBLE_CANONICAL_NAME_2)) {
+                                valueParsed = Double.parseDouble(value);
+                            } else {
+                                throw new RemotingCommandException("the custom field <" + fieldName + "> type is not supported");
+                            }
+
+                            field.set(objectHeader, valueParsed);
+
+                        } catch (Throwable e) {
+                            log.error("Failed field [{}] decoding", fieldName, e);
+                        }
+                    }
+                }
+            }
+
+            objectHeader.checkFields();
+        }
+
         return objectHeader;
+    }
+
+    private boolean isFieldNullable(Field field) {
+        if (!NULLABLE_FIELD_CACHE.containsKey(field)) {
+            Annotation annotation = field.getAnnotation(CFNotNull.class);
+            synchronized (NULLABLE_FIELD_CACHE) {
+                NULLABLE_FIELD_CACHE.put(field, annotation == null);
+            }
+        }
+        return NULLABLE_FIELD_CACHE.get(field);
+    }
+
+    private String getCanonicalName(Class clazz) {
+        String name = CANONICAL_NAME_CACHE.get(clazz);
+
+        if (name == null) {
+            name = clazz.getCanonicalName();
+            synchronized (CANONICAL_NAME_CACHE) {
+                CANONICAL_NAME_CACHE.put(clazz, name);
+            }
+        }
+        return name;
     }
 }
