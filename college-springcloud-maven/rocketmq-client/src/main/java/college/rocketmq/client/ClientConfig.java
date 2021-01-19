@@ -26,4 +26,8 @@ public class ClientConfig {
         cc.clientIP = clientIP;
         return cc;
     }
+
+    public void resetClientConfig(ClientConfig clientConfig) {
+
+    }
 }

@@ -11,6 +11,8 @@ public class RocketmqClientApplication {
     public static void main(String[] args) throws MQClientException {
         DefaultMQPushConsumer mqPushConsumer = new DefaultMQPushConsumer();
         mqPushConsumer.start();
+
+
     }
 
 }

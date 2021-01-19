@@ -12,9 +12,8 @@ import college.rocketmq.client.consumer.exception.MQClientException;
 import college.rocketmq.client.impl.ClientRemotingProcessor;
 import college.rocketmq.client.impl.MQClientAPIImpl;
 import college.rocketmq.client.impl.consumer.PullMessageService;
-import college.rocketmq.client.impl.producer.DefaultMQProducer;
 import college.rocketmq.client.impl.producer.DefaultMQProducerImpl;
-import college.rocketmq.client.impl.producer.MQProducerInner;
+import college.rocketmq.client.producer.DefaultMQProducer;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -187,4 +186,12 @@ public class MQClientInstance {
 
     }
 
+    public String findBrokerAddressInPublish(String brokerName) {
+        HashMap<Long/* brokerId */, String/* address */> map = this.brokerAddrTable.get(brokerName);
+        if (map != null && !map.isEmpty()) {
+            return map.get(MixAll.MASTER_ID);
+        }
+
+        return null;
+    }
 }

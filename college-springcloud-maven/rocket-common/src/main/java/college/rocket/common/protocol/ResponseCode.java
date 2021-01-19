@@ -11,4 +11,6 @@ import college.rocket.remoting.protocol.RemotingSysResponseCode;
 public class ResponseCode extends RemotingSysResponseCode {
 
     public static final int TOPIC_NOT_EXIST = 17;
+
+    public static final int FLUSH_DISK_TIMEOUT = 10;
 }

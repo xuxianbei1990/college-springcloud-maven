@@ -1,24 +1,38 @@
 package college.rocketmq.client.impl;
 
+import college.rocket.common.message.Message;
+import college.rocket.common.message.MessageClientIDSetter;
+import college.rocket.common.message.MessageQueue;
+import college.rocket.common.protocol.NamespaceUtil;
 import college.rocket.common.protocol.RequestCode;
 import college.rocket.common.protocol.ResponseCode;
+import college.rocket.common.protocol.header.SendMessageRequestHeader;
+import college.rocket.common.protocol.header.SendMessageRequestHeaderV2;
+import college.rocket.common.protocol.header.SendMessageResponseHeader;
 import college.rocket.common.protocol.header.namesrv.GetRouteInfoRequestHeader;
 import college.rocket.common.protocol.route.TopicRouteData;
 import college.rocket.remoting.RPCHook;
 import college.rocket.remoting.RemotingClient;
-import college.rocket.remoting.exception.RemotingConnectException;
-import college.rocket.remoting.exception.RemotingException;
-import college.rocket.remoting.exception.RemotingSendRequestException;
-import college.rocket.remoting.exception.RemotingTimeoutException;
+import college.rocket.remoting.exception.*;
 import college.rocket.remoting.netty.NettyClientConfig;
 import college.rocket.remoting.netty.NettyRemotingClient;
 import college.rocket.remoting.protocol.RemotingCommand;
 import college.rocketmq.client.ClientConfig;
 import college.rocketmq.client.consumer.exception.MQClientException;
+import college.rocketmq.client.exception.MQBrokerException;
+import college.rocketmq.client.hook.SendMessageContext;
+import college.rocketmq.client.impl.factory.MQClientInstance;
+import college.rocketmq.client.impl.producer.DefaultMQProducerImpl;
+import college.rocketmq.client.impl.producer.TopicPublishInfo;
+import college.rocketmq.client.producer.SendCallback;
+import college.rocketmq.client.producer.SendResult;
+import college.rocketmq.client.producer.SendStatus;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author: xuxianbei
@@ -31,6 +45,8 @@ public class MQClientAPIImpl {
 
 
     private final RemotingClient remotingClient;
+
+    private ClientConfig clientConfig;
 
     public MQClientAPIImpl(final NettyClientConfig nettyClientConfig,
                            final ClientRemotingProcessor clientRemotingProcessor,
@@ -80,5 +96,105 @@ public class MQClientAPIImpl {
         String[] addrArray = addrs.split(";");
         List<String> list = Arrays.asList(addrArray);
         this.remotingClient.updateNameServerAddressList(list);
+    }
+
+    public SendResult sendMessage(
+            final String addr,
+            final String brokerName,
+            final Message msg,
+            final SendMessageRequestHeader requestHeader,
+            final long timeoutMillis,
+            final CommunicationMode communicationMode,
+            final SendCallback sendCallback,
+            final TopicPublishInfo topicPublishInfo,
+            final MQClientInstance instance,
+            final int retryTimesWhenSendFailed,
+            final SendMessageContext context,
+            final DefaultMQProducerImpl producer
+    ) throws RemotingException, MQBrokerException, InterruptedException {
+        long beginStartTime = System.currentTimeMillis();
+        RemotingCommand request = null;
+        SendMessageRequestHeaderV2 requestHeaderV2 = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
+        request = RemotingCommand.createRequestCommand(RequestCode.SEND_MESSAGE_V2, requestHeaderV2);
+        switch (communicationMode) {
+            case SYNC:
+                long costTimeSync = System.currentTimeMillis() - beginStartTime;
+                if (timeoutMillis < costTimeSync) {
+                    throw new RemotingTooMuchRequestException("sendMessage call timeout");
+                }
+                return this.sendMessageSync(addr, brokerName, msg, timeoutMillis - costTimeSync, request);
+        }
+        return null;
+    }
+
+    public SendResult sendMessage(
+            final String addr,
+            final String brokerName,
+            final Message msg,
+            final SendMessageRequestHeader requestHeader,
+            final long timeoutMillis,
+            final CommunicationMode communicationMode,
+            final SendMessageContext context,
+            final DefaultMQProducerImpl producer
+    ) throws RemotingException, MQBrokerException, InterruptedException{
+        return sendMessage(addr, brokerName, msg, requestHeader, timeoutMillis, communicationMode, null, null, null, 0, context, producer);
+    }
+
+
+    private SendResult sendMessageSync(
+            final String addr,
+            final String brokerName,
+            final Message msg,
+            final long timeoutMillis,
+            final RemotingCommand request
+    ) throws RemotingException, MQBrokerException, InterruptedException {
+        RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
+        assert response != null;
+        return this.processSendResponse(brokerName, msg, response);
+    }
+
+    private SendResult processSendResponse(
+            final String brokerName,
+            final Message msg,
+            final RemotingCommand response
+    ) throws MQBrokerException, RemotingCommandException {
+        SendStatus sendStatus;
+        switch (response.getCode()) {
+            case ResponseCode.FLUSH_DISK_TIMEOUT: {
+                sendStatus = SendStatus.FLUSH_DISK_TIMEOUT;
+                break;
+            }
+//            case ResponseCode.FLUSH_SLAVE_TIMEOUT: {
+//                sendStatus = SendStatus.FLUSH_SLAVE_TIMEOUT;
+//                break;
+//            }
+//            case ResponseCode.SLAVE_NOT_AVAILABLE: {
+//                sendStatus = SendStatus.SLAVE_NOT_AVAILABLE;
+//                break;
+//            }
+            case ResponseCode.SUCCESS: {
+                sendStatus = SendStatus.SEND_OK;
+                break;
+            }
+            default: {
+                throw new MQBrokerException(response.getCode(), response.getRemark());
+            }
+        }
+
+        SendMessageResponseHeader responseHeader =
+                (SendMessageResponseHeader) response.decodeCommandCustomHeader(SendMessageResponseHeader.class);
+
+        String topic = msg.getTopic();
+        if (!StringUtils.isEmpty(this.clientConfig.getNamespace())) {
+            topic = NamespaceUtil.withoutNamespace(topic, this.clientConfig.getNamespace());
+        }
+
+        MessageQueue messageQueue = new MessageQueue(topic, brokerName, responseHeader.getQueueId());
+        String uniqMsgId = MessageClientIDSetter.getUniqID(msg);
+
+        SendResult sendResult = new SendResult(sendStatus,
+                uniqMsgId,
+                responseHeader.getMsgId(), messageQueue, responseHeader.getQueueOffset());
+        return sendResult;
     }
 }
