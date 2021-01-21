@@ -1,5 +1,7 @@
 package college.rocket.common.protocol.header;
 
+import college.rocket.remoting.CommandCustomHeader;
+import college.rocket.remoting.exception.RemotingCommandException;
 import lombok.Data;
 
 /**
@@ -9,7 +11,7 @@ import lombok.Data;
  * Version:V1.0
  */
 @Data
-public class SendMessageRequestHeader {
+public class SendMessageRequestHeader implements CommandCustomHeader {
     private String producerGroup;
     private String topic;
     private String defaultTopic;
@@ -21,4 +23,9 @@ public class SendMessageRequestHeader {
     private String properties;
 
     private Integer reconsumeTimes;
+
+    @Override
+    public void checkFields() throws RemotingCommandException {
+
+    }
 }

@@ -1,0 +1,18 @@
+package college.rocket.store;
+
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * @author: xuxianbei
+ * Date: 2021/1/21
+ * Time: 16:32
+ * Version:V1.0
+ */
+public interface MessageStore {
+
+    default CompletableFuture<PutMessageResult> asyncPutMessage(final MessageExtBrokerInner msg) {
+        return CompletableFuture.completedFuture(putMessage(msg));
+    }
+
+    PutMessageResult putMessage(final MessageExtBrokerInner msg);
+}

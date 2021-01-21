@@ -2,24 +2,26 @@ package college.rocket.broker;
 
 import college.rocket.broker.client.ClientHousekeepingService;
 import college.rocket.broker.filtersrv.FilterServerManager;
+import college.rocket.broker.latency.BrokerFixedThreadPoolExecutor;
 import college.rocket.broker.out.BrokerOuterAPI;
+import college.rocket.broker.processor.SendMessageProcessor;
 import college.rocket.broker.topic.TopicConfigManager;
 import college.rocket.common.BrokerConfig;
 import college.rocket.common.ThreadFactoryImpl;
 import college.rocket.common.namesrv.RegisterBrokerResult;
+import college.rocket.common.protocol.RequestCode;
 import college.rocket.common.protocol.body.TopicConfigSerializeWrapper;
 import college.rocket.remoting.RemotingServer;
 import college.rocket.remoting.netty.NettyClientConfig;
 import college.rocket.remoting.netty.NettyRemotingServer;
 import college.rocket.remoting.netty.NettyServerConfig;
+import college.rocket.store.MessageStore;
 import college.rocket.store.config.MessageStoreConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author: xuxianbei
@@ -38,7 +40,11 @@ public class BrokerController {
     private final BrokerOuterAPI brokerOuterAPI;
     private final ClientHousekeepingService clientHousekeepingService;
     private final FilterServerManager filterServerManager;
+    private ExecutorService sendMessageExecutor;
     private TopicConfigManager topicConfigManager;
+    private final BlockingQueue<Runnable> sendThreadPoolQueue;
+
+    private MessageStore messageStore;
 
     private RemotingServer remotingServer;
 
@@ -57,6 +63,8 @@ public class BrokerController {
         this.filterServerManager = new FilterServerManager(this);
         this.clientHousekeepingService = new ClientHousekeepingService(this);
         this.topicConfigManager = new TopicConfigManager(this);
+        //接收发送消息线程池队列
+        this.sendThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getSendThreadPoolQueueCapacity());
     }
 
     public boolean initialize() throws CloneNotSupportedException {
@@ -64,7 +72,28 @@ public class BrokerController {
         if (this.brokerConfig.getNamesrvAddr() != null) {
             this.brokerOuterAPI.updateNameServerAddressList(this.brokerConfig.getNamesrvAddr());
         }
+
+        //处理发送消息的线程池, 超过队列直接报错
+        this.sendMessageExecutor = new BrokerFixedThreadPoolExecutor(
+                this.brokerConfig.getSendMessageThreadPoolNums(),
+                this.brokerConfig.getSendMessageThreadPoolNums(),
+                1000 * 60,
+                TimeUnit.MILLISECONDS,
+                this.sendThreadPoolQueue,
+                new ThreadFactoryImpl("SendMessageThread_"));
+
+        this.registerProcessor();
+
+
         return true;
+    }
+
+    private void registerProcessor() {
+
+        SendMessageProcessor sendProcessor = new SendMessageProcessor(this);
+        this.remotingServer.registerProcessor(RequestCode.SEND_MESSAGE, sendProcessor, this.sendMessageExecutor);
+        this.remotingServer.registerProcessor(RequestCode.SEND_MESSAGE_V2, sendProcessor, this.sendMessageExecutor);
+
     }
 
     public void start() {
@@ -74,6 +103,7 @@ public class BrokerController {
             this.remotingServer.start();
         }
 
+        //作为客户端连接NameSrv做的配置信息
         if (this.brokerOuterAPI != null) {
             this.brokerOuterAPI.start();
         }

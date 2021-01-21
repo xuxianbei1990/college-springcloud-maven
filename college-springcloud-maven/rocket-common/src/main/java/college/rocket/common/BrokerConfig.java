@@ -17,6 +17,8 @@ public class BrokerConfig {
      * between 10, 000 and 60, 000 milliseconds.
      */
     private int registerNameServerPeriod = 1000 * 30;
+    private int sendMessageThreadPoolNums = 1;
+    private int sendThreadPoolQueueCapacity = 10000;
 
     private boolean forceRegister = true;
 

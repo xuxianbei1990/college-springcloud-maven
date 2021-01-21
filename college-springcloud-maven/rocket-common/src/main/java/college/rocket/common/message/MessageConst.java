@@ -10,4 +10,5 @@ public class MessageConst {
     public static final String PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX = "UNIQ_KEY";
 
     public static final String PROPERTY_INSTANCE_ID = "INSTANCE_ID";
+    public static final String PROPERTY_CLUSTER = "CLUSTER";
 }
