@@ -18,6 +18,8 @@ public class Message implements Serializable {
     private String topic;
 
     private byte[] body;
+
+    private int flag;
     private Map<String, String> properties;
 
     private static final long serialVersionUID = 6917607801604463419L;

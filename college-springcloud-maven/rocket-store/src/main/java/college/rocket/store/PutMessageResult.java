@@ -7,4 +7,6 @@ package college.rocket.store;
  * Version:V1.0
  */
 public class PutMessageResult {
+    public PutMessageResult(PutMessageStatus checkStoreStatus, AppendMessageResult appendMessageResult) {
+    }
 }

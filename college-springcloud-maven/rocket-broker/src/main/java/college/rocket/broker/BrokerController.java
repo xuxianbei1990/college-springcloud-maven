@@ -3,6 +3,8 @@ package college.rocket.broker;
 import college.rocket.broker.client.ClientHousekeepingService;
 import college.rocket.broker.filtersrv.FilterServerManager;
 import college.rocket.broker.latency.BrokerFixedThreadPoolExecutor;
+import college.rocket.broker.longpolling.NotifyMessageArrivingListener;
+import college.rocket.broker.longpolling.PullRequestHoldService;
 import college.rocket.broker.out.BrokerOuterAPI;
 import college.rocket.broker.processor.SendMessageProcessor;
 import college.rocket.broker.topic.TopicConfigManager;
@@ -15,8 +17,11 @@ import college.rocket.remoting.RemotingServer;
 import college.rocket.remoting.netty.NettyClientConfig;
 import college.rocket.remoting.netty.NettyRemotingServer;
 import college.rocket.remoting.netty.NettyServerConfig;
+import college.rocket.store.DefaultMessageStore;
+import college.rocket.store.MessageArrivingListener;
 import college.rocket.store.MessageStore;
 import college.rocket.store.config.MessageStoreConfig;
+import college.rocket.store.stats.BrokerStatsManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,6 +42,9 @@ public class BrokerController {
     private final NettyServerConfig nettyServerConfig;
     private final NettyClientConfig nettyClientConfig;
     private final MessageStoreConfig messageStoreConfig;
+    private final BrokerStatsManager brokerStatsManager;
+    private final MessageArrivingListener messageArrivingListener;
+    private final PullRequestHoldService pullRequestHoldService;
     private final BrokerOuterAPI brokerOuterAPI;
     private final ClientHousekeepingService clientHousekeepingService;
     private final FilterServerManager filterServerManager;
@@ -63,6 +71,12 @@ public class BrokerController {
         this.filterServerManager = new FilterServerManager(this);
         this.clientHousekeepingService = new ClientHousekeepingService(this);
         this.topicConfigManager = new TopicConfigManager(this);
+        // 拉取请求持有服务
+        this.pullRequestHoldService = new PullRequestHoldService(this);
+        // 通知消息到达监听
+        this.messageArrivingListener = new NotifyMessageArrivingListener(this.pullRequestHoldService);
+        //broker 状态管理
+        this.brokerStatsManager = new BrokerStatsManager(this.brokerConfig.getBrokerClusterName());
         //接收发送消息线程池队列
         this.sendThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getSendThreadPoolQueueCapacity());
     }
@@ -83,7 +97,9 @@ public class BrokerController {
                 new ThreadFactoryImpl("SendMessageThread_"));
 
         this.registerProcessor();
-
+        //消息存储
+        this.messageStore = new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager, this.messageArrivingListener,
+                this.brokerConfig);
 
         return true;
     }

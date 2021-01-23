@@ -2,6 +2,8 @@ package college.rocket.store.config;
 
 import lombok.Data;
 
+import java.io.File;
+
 /**
  * @author: xuxianbei
  * Date: 2021/1/13
@@ -11,6 +13,16 @@ import lombok.Data;
 @Data
 public class MessageStoreConfig {
 
+    private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
+    private boolean useReentrantLockWhenPutMessage = false;
+
     private int haListenPort = 10912;
+
+    private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
+
+    private int maxMessageSize = 1024 * 1024 * 4;
+
+    private String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
+            + File.separator + "commitlog";
 
 }

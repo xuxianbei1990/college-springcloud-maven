@@ -1,5 +1,9 @@
 package college.rocket.common.message;
 
+import college.rocket.common.UtilAll;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 /**
@@ -13,6 +17,8 @@ public class MessageDecoder {
     public static final char NAME_VALUE_SEPARATOR = 1;
 
     public static final char PROPERTY_SEPARATOR = 2;
+
+    public final static Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
     public static String messageProperties2String(Map<String, String> properties) {
         StringBuilder sb = new StringBuilder();
@@ -31,5 +37,15 @@ public class MessageDecoder {
             }
         }
         return sb.toString();
+    }
+
+    public static String createMessageId(final ByteBuffer input, final ByteBuffer addr, final long offset) {
+        input.flip();
+        int msgIDLength = addr.limit() == 8 ? 16 : 28;
+        input.limit(msgIDLength);
+        input.put(addr);
+        input.putLong(offset);
+
+        return UtilAll.bytes2string(input.array());
     }
 }
