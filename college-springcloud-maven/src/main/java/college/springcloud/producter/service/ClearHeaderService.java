@@ -56,6 +56,7 @@ public class ClearHeaderService {
 
     @Transactional
     public Integer transactionRollback() {
+        //这一步就是发布事务，
         applicationContext.publishEvent(new MyTransactionEvent("ddddd"));
 
         LambdaQueryWrapper<CfClearHeader> lambdaQueryWrapper =

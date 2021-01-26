@@ -1,9 +1,11 @@
 package college.rocket.store;
 
 import college.rocket.common.message.MessageDecoder;
+import college.rocket.common.message.MessageExt;
 import college.rocket.common.sysflag.MessageSysFlag;
 import college.rocket.remoting.common.ServiceThread;
 import college.rocket.store.config.FlushDiskType;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -15,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
  * Time: 10:58
  * Version:V1.0
  */
+@Slf4j
 public class CommitLog {
 
     // Message's MAGIC CODE daa320a7
@@ -63,7 +66,24 @@ public class CommitLog {
         } finally {
             putMessageLock.unlock();
         }
-         return null;
+        //创建消息存放的结果
+        PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.PUT_OK, result);
+        CompletableFuture<PutMessageStatus> flushResultFuture = submitFlushRequest(result, putMessageResult, msg);
+        return null;
+    }
+
+    private CompletableFuture<PutMessageStatus> submitFlushRequest(AppendMessageResult result, PutMessageResult putMessageResult,
+                                                                   MessageExt messageExt) {
+        //同步刷盘
+        if (FlushDiskType.SYNC_FLUSH == this.defaultMessageStore.getMessageStoreConfig().getFlushDiskType()) {
+            final GroupCommitService service = (GroupCommitService) this.flushCommitLogService;
+            service.wakeup();
+            return CompletableFuture.completedFuture(PutMessageStatus.PUT_OK);
+        } else {
+            //异步刷盘
+            flushCommitLogService.wakeup();
+        }
+        return CompletableFuture.completedFuture(PutMessageStatus.PUT_OK);
     }
 
     abstract class FlushCommitLogService extends ServiceThread {
@@ -98,6 +118,8 @@ public class CommitLog {
 
     //异步刷盘
     class FlushRealTimeService extends FlushCommitLogService {
+        private long lastFlushTimestamp = 0;
+        private long printTimes = 0;
 
         @Override
         public String getServiceName() {
@@ -106,7 +128,46 @@ public class CommitLog {
 
         @Override
         public void run() {
+            CommitLog.log.info(this.getServiceName() + " service started");
+            while (!this.isStopped()) {
+                boolean flushCommitLogTimed = CommitLog.this.defaultMessageStore.getMessageStoreConfig().isFlushCommitLogTimed();
+                int interval = CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushIntervalCommitLog();
+                int flushPhysicQueueLeastPages = CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushCommitLogLeastPages();
+                //10s
+                int flushPhysicQueueThoroughInterval =
+                        CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushCommitLogThoroughInterval();
 
+                boolean printFlushProgress = false;
+
+                long currentTimeMillis = System.currentTimeMillis();
+
+                if (currentTimeMillis >= (this.lastFlushTimestamp + flushPhysicQueueThoroughInterval)) {
+                    //上一次刷盘时间
+                    this.lastFlushTimestamp = currentTimeMillis;
+                    flushPhysicQueueLeastPages = 0;
+                    printFlushProgress = (printTimes++ % 10) == 0;
+                }
+
+
+                try {
+                    //异步刷盘实质
+                    if (flushCommitLogTimed) {
+                        Thread.sleep(interval);
+                    } else {
+                        this.waitForRunning(interval);
+                    }
+
+                    if (printFlushProgress) {
+//                        this.printFlushProgress();
+                    }
+
+                    long begin = System.currentTimeMillis();
+                    CommitLog.this.mappedFileQueue.flush(flushPhysicQueueLeastPages);
+
+                } catch (Throwable e) {
+
+                }
+            }
         }
     }
 
@@ -117,10 +178,11 @@ public class CommitLog {
         private final ByteBuffer msgStoreItemMemory;
         private final StringBuilder keyBuilder = new StringBuilder();
 
-        DefaultAppendMessageCallback (final int size) {
+        DefaultAppendMessageCallback(final int size) {
             this.msgIdMemory = ByteBuffer.allocate(4 + 4 + 8);
             this.msgStoreItemMemory = ByteBuffer.allocate(size + END_FILE_MIN_BLANK_LENGTH);
         }
+
         @Override
         public AppendMessageResult doAppend(final long fileFromOffset, final ByteBuffer byteBuffer, final int maxBlank,
                                             final MessageExtBrokerInner msgInner) {
@@ -218,6 +280,7 @@ public class CommitLog {
 
 
     }
+
     protected static int calMsgLength(int sysFlag, int bodyLength, int topicLength, int propertiesLength) {
         int bornhostLength = (sysFlag & MessageSysFlag.BORNHOST_V6_FLAG) == 0 ? 8 : 20;
         int storehostAddressLength = (sysFlag & MessageSysFlag.STOREHOSTADDRESS_V6_FLAG) == 0 ? 8 : 20;

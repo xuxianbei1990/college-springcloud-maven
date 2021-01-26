@@ -11,6 +11,7 @@ public class MappedFileQueue {
     private final String storePath;
     private final int mappedFileSize;
     private final AllocateMappedFileService allocateMappedFileService;
+    private long flushedWhere = 0;
 
     public MappedFile getLastMappedFile() {
         return null;
@@ -29,5 +30,19 @@ public class MappedFileQueue {
         this.storePath = storePath;
         this.mappedFileSize = mappedFileSize;
         this.allocateMappedFileService = allocateMappedFileService;
+    }
+
+    public boolean flush(final int flushLeastPages) {
+        boolean result = true;
+        MappedFile mappedFile = this.findMappedFileByOffset(this.flushedWhere, this.flushedWhere == 0);
+        if (mappedFile != null) {
+
+        }
+
+        return false;
+    }
+
+    public MappedFile findMappedFileByOffset(final long offset, final boolean returnFirstOnNotFound) {
+        return null;
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
+ * 事务监听
  * @author: xuxianbei
  * Date: 2020/9/21
  * Time: 16:53
