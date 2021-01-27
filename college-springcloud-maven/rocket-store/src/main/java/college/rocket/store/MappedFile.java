@@ -29,6 +29,8 @@ public class MappedFile extends ReferenceResource {
     private long fileFromOffset;
     private File file;
     private MappedByteBuffer mappedByteBuffer;
+    private volatile long storeTimestamp = 0;
+    protected final AtomicInteger committedPosition = new AtomicInteger(0);
 
     public MappedFile(final String fileName, final int fileSize) throws IOException {
         init(fileName, fileSize);
@@ -76,5 +78,25 @@ public class MappedFile extends ReferenceResource {
             }
         }
         return null;
+    }
+
+    public int flush(final int flushLeastPages) {
+        if (this.isAbleToFlush(flushLeastPages)) {
+            if (this.hold()) {
+                int value = getReadPosition();
+
+            }
+        }
+
+        return 0;
+
+    }
+
+    private boolean isAbleToFlush(final int flushLeastPages) {
+        return true;
+    }
+
+    public int getReadPosition() {
+        return this.writeBuffer == null ? this.wrotePosition.get() : this.committedPosition.get();
     }
 }

@@ -1,17 +1,21 @@
 package college.rocket.store;
 
+import lombok.Data;
+
 /**
  * @author: xuxianbei
  * Date: 2021/1/23
  * Time: 11:08
  * Version:V1.0
  */
+@Data
 public class MappedFileQueue {
 
     private final String storePath;
     private final int mappedFileSize;
     private final AllocateMappedFileService allocateMappedFileService;
     private long flushedWhere = 0;
+
 
     public MappedFile getLastMappedFile() {
         return null;
@@ -36,7 +40,8 @@ public class MappedFileQueue {
         boolean result = true;
         MappedFile mappedFile = this.findMappedFileByOffset(this.flushedWhere, this.flushedWhere == 0);
         if (mappedFile != null) {
-
+            long tmpTimeStamp = mappedFile.getStoreTimestamp();
+            int offset = mappedFile.flush(flushLeastPages);
         }
 
         return false;

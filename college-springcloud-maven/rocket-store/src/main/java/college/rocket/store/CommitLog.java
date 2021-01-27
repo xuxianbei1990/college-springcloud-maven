@@ -5,10 +5,13 @@ import college.rocket.common.message.MessageExt;
 import college.rocket.common.sysflag.MessageSysFlag;
 import college.rocket.remoting.common.ServiceThread;
 import college.rocket.store.config.FlushDiskType;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -103,16 +106,54 @@ public class CommitLog {
         }
     }
 
+    @Data
+    public static class GroupCommitRequest {
+        private final long nextOffset;
+
+        public GroupCommitRequest(long nextOffset, long timeoutMillis) {
+            this.nextOffset = nextOffset;
+        }
+    }
+
+    /**
+     * 同步刷盘
+     */
     class GroupCommitService extends FlushCommitLogService {
+        private volatile List<GroupCommitRequest> requestsRead = new ArrayList<GroupCommitRequest>();
 
         @Override
         public String getServiceName() {
             return null;
         }
 
+        private void doCommit() {
+            synchronized (this.requestsRead) {
+                if (!this.requestsRead.isEmpty()) {
+                    for (GroupCommitRequest req : this.requestsRead) {
+                        boolean flushOK = false;
+                        for (int i = 0; i < 2 && !flushOK; i++) {
+                            flushOK = CommitLog.this.mappedFileQueue.getFlushedWhere() >= req.getNextOffset();
+
+                            if (!flushOK) {
+                                CommitLog.this.mappedFileQueue.flush(0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         @Override
         public void run() {
-
+            while (!this.isStopped()) {
+                try {
+                    //防止空轮询，造成cpu浪费
+                    this.waitForRunning(10);
+                    this.doCommit();
+                } catch (Exception e) {
+                    CommitLog.log.warn(this.getServiceName() + " service has exception. ", e);
+                }
+            }
         }
     }
 
@@ -150,7 +191,7 @@ public class CommitLog {
 
 
                 try {
-                    //异步刷盘实质
+                    //异步刷盘实质就是线程等待500ms然后继续执行
                     if (flushCommitLogTimed) {
                         Thread.sleep(interval);
                     } else {
@@ -162,6 +203,7 @@ public class CommitLog {
                     }
 
                     long begin = System.currentTimeMillis();
+                    //这里是具体写磁盘的实现
                     CommitLog.this.mappedFileQueue.flush(flushPhysicQueueLeastPages);
 
                 } catch (Throwable e) {

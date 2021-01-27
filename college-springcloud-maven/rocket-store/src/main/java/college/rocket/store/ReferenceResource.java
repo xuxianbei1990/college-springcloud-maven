@@ -7,4 +7,11 @@ package college.rocket.store;
  * Version:V1.0
  */
 public abstract class ReferenceResource {
+
+    public synchronized boolean hold() {
+
+        return false;
+    }
 }
+
+
