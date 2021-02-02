@@ -26,6 +26,7 @@ public class ResponseFuture {
     private volatile Throwable cause;
     private volatile RemotingCommand responseCommand;
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
+    private final long beginTimestamp = System.currentTimeMillis();
 
     public ResponseFuture(Channel channel, int opaque, long timeoutMillis, InvokeCallback invokeCallback,
                           SemaphoreReleaseOnlyOnce once) {
@@ -50,5 +51,10 @@ public class ResponseFuture {
         if (this.once != null) {
             this.once.release();
         }
+    }
+
+    public boolean isTimeout() {
+        long diff = System.currentTimeMillis() - this.beginTimestamp;
+        return diff > this.timeoutMillis;
     }
 }

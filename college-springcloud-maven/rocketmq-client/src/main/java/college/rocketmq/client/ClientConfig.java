@@ -1,5 +1,6 @@
 package college.rocketmq.client;
 
+import college.rocket.common.protocol.NamespaceUtil;
 import college.rocket.remoting.common.RemotingUtil;
 import lombok.Data;
 
@@ -29,5 +30,9 @@ public class ClientConfig {
 
     public void resetClientConfig(ClientConfig clientConfig) {
 
+    }
+
+    public String withNamespace(String resource) {
+        return NamespaceUtil.wrapNamespace(this.getNamespace(), resource);
     }
 }

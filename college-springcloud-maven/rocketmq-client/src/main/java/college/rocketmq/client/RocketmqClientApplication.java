@@ -14,7 +14,10 @@ public class RocketmqClientApplication {
 
     public static void main(String[] args) throws MQClientException, RemotingException, InterruptedException, MQBrokerException {
         DefaultMQPushConsumer mqPushConsumer = new DefaultMQPushConsumer();
+        //消息订阅
+        mqPushConsumer.subscribe("Simple", "*");
         mqPushConsumer.start();
+
         DefaultMQProducer defaultMqProducer = new DefaultMQProducer("XXB");
         defaultMqProducer.start();
         Message msg = new Message();

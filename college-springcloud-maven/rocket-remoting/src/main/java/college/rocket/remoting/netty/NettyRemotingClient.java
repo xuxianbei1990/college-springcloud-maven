@@ -1,11 +1,13 @@
 package college.rocket.remoting.netty;
 
 import college.rocket.remoting.ChannelEventListener;
+import college.rocket.remoting.InvokeCallback;
 import college.rocket.remoting.RemotingClient;
 import college.rocket.remoting.common.RemotingHelper;
 import college.rocket.remoting.exception.RemotingConnectException;
 import college.rocket.remoting.exception.RemotingSendRequestException;
 import college.rocket.remoting.exception.RemotingTimeoutException;
+import college.rocket.remoting.exception.RemotingTooMuchRequestException;
 import college.rocket.remoting.protocol.RemotingCommand;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -171,6 +173,21 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         } else {
             this.closeChannel(addr, channel);
             throw new RemotingConnectException(addr);
+        }
+    }
+
+    @Override
+    public void invokeAsync(String addr, RemotingCommand request, long timeoutMillis, InvokeCallback invokeCallback)
+            throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException {
+        long beginStartTime = System.currentTimeMillis();
+        final Channel channel = this.getAndCreateChannel(addr);
+        if (channel != null && channel.isActive()) {
+            try {
+                long costTime = System.currentTimeMillis() - beginStartTime;
+                this.invokeAsyncImpl(channel, request, timeoutMillis - costTime, invokeCallback);
+            } catch (RemotingSendRequestException e) {
+
+            }
         }
     }
 

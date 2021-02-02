@@ -9,17 +9,15 @@ import college.rocket.remoting.exception.RemotingException;
 import college.rocket.remoting.netty.NettyClientConfig;
 import college.rocketmq.client.ClientConfig;
 import college.rocketmq.client.consumer.exception.MQClientException;
-import college.rocketmq.client.impl.ClientRemotingProcessor;
-import college.rocketmq.client.impl.MQClientAPIImpl;
+import college.rocketmq.client.impl.*;
 import college.rocketmq.client.impl.consumer.PullMessageService;
+import college.rocketmq.client.impl.consumer.RebalanceService;
 import college.rocketmq.client.impl.producer.DefaultMQProducerImpl;
 import college.rocketmq.client.producer.DefaultMQProducer;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -42,13 +40,16 @@ public class MQClientInstance {
     private final NettyClientConfig nettyClientConfig;
     private final ClientRemotingProcessor clientRemotingProcessor;
     private final PullMessageService pullMessageService;
+    private final RebalanceService rebalanceService;
     private final DefaultMQProducer defaultMQProducer;
     private final String clientId;
     private final ClientConfig clientConfig;
     private final Lock lockNamesrv = new ReentrantLock();
     private final ConcurrentMap<String/* Topic */, TopicRouteData> topicRouteTable = new ConcurrentHashMap<String, TopicRouteData>();
+    private final ConcurrentMap<String/* group */, MQConsumerInner> consumerTable = new ConcurrentHashMap<String, MQConsumerInner>();
     private final ConcurrentMap<String/* Broker Name */, HashMap<Long/* brokerId */, String/* address */>> brokerAddrTable =
             new ConcurrentHashMap<String, HashMap<Long, String>>();
+    private final Lock lockHeartbeat = new ReentrantLock();
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -66,6 +67,7 @@ public class MQClientInstance {
             log.info("user specified name server address: {}", this.clientConfig.getNamesrvAddr());
         }
         pullMessageService = new PullMessageService(this);
+        this.rebalanceService = new RebalanceService(this);
         this.defaultMQProducer = new DefaultMQProducer(MixAll.CLIENT_INNER_PRODUCER_GROUP);
         this.defaultMQProducer.resetClientConfig(clientConfig);
         this.clientId = clientId;
@@ -82,6 +84,8 @@ public class MQClientInstance {
                     this.startScheduledTask();
                     //只是从队列中拉取消息分发，不是从broker中拉取消息
                     pullMessageService.start();
+                    //负载均衡
+                    this.rebalanceService.start();
                     //这里创建了实例，但是没有启动
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);
                     this.serviceState = ServiceState.RUNNING;
@@ -192,6 +196,57 @@ public class MQClientInstance {
             return map.get(MixAll.MASTER_ID);
         }
 
+        return null;
+    }
+
+    public void sendHeartbeatToAllBrokerWithLock() {
+        if (this.lockHeartbeat.tryLock()) {
+
+        }
+
+
+    }
+
+    public MQConsumerInner selectConsumer(String group) {
+        return this.consumerTable.get(group);
+    }
+
+    public boolean registerConsumer(final String group, final MQConsumerInner consumer) {
+        if (null == group || null == consumer) {
+            return false;
+        }
+        MQConsumerInner prev = this.consumerTable.putIfAbsent(group, consumer);
+        if (prev != null) {
+            log.warn("the consumer group[" + group + "] exist already.");
+            return false;
+        }
+
+        return true;
+    }
+
+    public void doRebalance() {
+        for (Map.Entry<String, MQConsumerInner> entry : this.consumerTable.entrySet()) {
+            MQConsumerInner impl = entry.getValue();
+            if (impl != null) {
+                try {
+                    impl.doRebalance();
+                } catch (Throwable e) {
+                    log.error("doRebalance exception", e);
+                }
+            }
+        }
+
+    }
+
+    public FindBrokerResult findBrokerAddressInSubscribe(
+            final String brokerName,
+            final long brokerId,
+            final boolean onlyThisBroker
+    ) {
+        return null;
+    }
+
+    public List<String> findConsumerIdList(final String topic, final String group) {
         return null;
     }
 }

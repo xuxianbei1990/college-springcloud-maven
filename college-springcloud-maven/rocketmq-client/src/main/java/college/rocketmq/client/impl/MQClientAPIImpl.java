@@ -6,21 +6,26 @@ import college.rocket.common.message.MessageQueue;
 import college.rocket.common.protocol.NamespaceUtil;
 import college.rocket.common.protocol.RequestCode;
 import college.rocket.common.protocol.ResponseCode;
+import college.rocket.common.protocol.header.PullMessageRequestHeader;
 import college.rocket.common.protocol.header.SendMessageRequestHeader;
 import college.rocket.common.protocol.header.SendMessageRequestHeaderV2;
 import college.rocket.common.protocol.header.SendMessageResponseHeader;
 import college.rocket.common.protocol.header.namesrv.GetRouteInfoRequestHeader;
 import college.rocket.common.protocol.route.TopicRouteData;
+import college.rocket.remoting.InvokeCallback;
 import college.rocket.remoting.RPCHook;
 import college.rocket.remoting.RemotingClient;
 import college.rocket.remoting.exception.*;
 import college.rocket.remoting.netty.NettyClientConfig;
 import college.rocket.remoting.netty.NettyRemotingClient;
+import college.rocket.remoting.netty.ResponseFuture;
 import college.rocket.remoting.protocol.RemotingCommand;
 import college.rocketmq.client.ClientConfig;
+import college.rocketmq.client.consumer.PullResult;
 import college.rocketmq.client.consumer.exception.MQClientException;
 import college.rocketmq.client.exception.MQBrokerException;
 import college.rocketmq.client.hook.SendMessageContext;
+import college.rocketmq.client.impl.consumer.PullCallback;
 import college.rocketmq.client.impl.factory.MQClientInstance;
 import college.rocketmq.client.impl.producer.DefaultMQProducerImpl;
 import college.rocketmq.client.impl.producer.TopicPublishInfo;
@@ -197,4 +202,66 @@ public class MQClientAPIImpl {
                 responseHeader.getMsgId(), messageQueue, responseHeader.getQueueOffset());
         return sendResult;
     }
+
+    public PullResult pullMessage(
+            final String addr,
+            final PullMessageRequestHeader requestHeader,
+            final long timeoutMillis,
+            final CommunicationMode communicationMode,
+            final PullCallback pullCallback
+    ) throws RemotingException, MQBrokerException, InterruptedException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.PULL_MESSAGE, requestHeader);
+
+        switch (communicationMode) {
+            case ONEWAY:
+                assert false;
+                return null;
+            case ASYNC:
+                this.pullMessageAsync(addr, request, timeoutMillis, pullCallback);
+                return null;
+        }
+        return null;
+    }
+
+    private void pullMessageAsync(
+            final String addr,
+            final RemotingCommand request,
+            final long timeoutMillis,
+            final PullCallback pullCallback
+    ) throws RemotingException, InterruptedException {
+        this.remotingClient.invokeAsync(addr, request, timeoutMillis, new InvokeCallback() {
+
+            @Override
+            public void operationComplete(ResponseFuture responseFuture) {
+                RemotingCommand response = responseFuture.getResponseCommand();
+                if (response != null) {
+                    try {
+                        //拼装消费消息
+                        PullResult pullResult = MQClientAPIImpl.this.processPullResponse(response);
+                        assert pullResult != null;
+                        //消费成功处理
+                        pullCallback.onSuccess(pullResult);
+                    } catch (Exception e) {
+                        pullCallback.onException(e);
+                    }
+                } else {
+                    if (!responseFuture.isSendRequestOK()) {
+                        pullCallback.onException(new MQClientException("send request failed to " + addr + ". Request: " + request, responseFuture.getCause()));
+                    } else if (responseFuture.isTimeout()) {
+                        pullCallback.onException(new MQClientException("wait response from " + addr + " timeout :" + responseFuture.getTimeoutMillis() + "ms" + ". Request: " + request,
+                                responseFuture.getCause()));
+                    } else {
+                        pullCallback.onException(new MQClientException("unknown reason. addr: " + addr + ", timeoutMillis: " + timeoutMillis + ". Request: " + request, responseFuture.getCause()));
+                    }
+                }
+            }
+        });
+
+
+    }
+
+    private PullResult processPullResponse(RemotingCommand response) {
+        return null;
+    }
+
 }

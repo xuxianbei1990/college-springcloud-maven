@@ -1,11 +1,19 @@
 package college.rocket.remoting.netty;
 
 import college.rocket.remoting.ChannelEventListener;
+import college.rocket.remoting.InvokeCallback;
 import college.rocket.remoting.common.Pair;
 import college.rocket.remoting.common.RemotingHelper;
+import college.rocket.remoting.common.SemaphoreReleaseOnlyOnce;
 import college.rocket.remoting.common.ServiceThread;
+import college.rocket.remoting.exception.RemotingSendRequestException;
+import college.rocket.remoting.exception.RemotingTimeoutException;
+import college.rocket.remoting.exception.RemotingTooMuchRequestException;
 import college.rocket.remoting.protocol.RemotingCommand;
 import college.rocket.remoting.protocol.RemotingSysResponseCode;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +50,48 @@ public abstract class NettyRemotingAbstract {
 
     public void putNettyEvent(final NettyEvent event) {
         this.nettyEventExecutor.putNettyEvent(event);
+    }
+
+    public void invokeAsyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis,
+                                final InvokeCallback invokeCallback)
+            throws InterruptedException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException {
+        long beginStartTime = System.currentTimeMillis();
+        final int opaque = request.getOpaque();
+        boolean acquired = this.semaphoreAsync.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
+
+        if (acquired) {
+            final SemaphoreReleaseOnlyOnce once = new SemaphoreReleaseOnlyOnce(this.semaphoreAsync);
+            long costTime = System.currentTimeMillis() - beginStartTime;
+            if (timeoutMillis < costTime) {
+                once.release();
+                throw new RemotingTimeoutException("invokeAsyncImpl call timeout");
+            }
+            final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis - costTime, invokeCallback, once);
+            this.responseTable.put(opaque, responseFuture);
+            try {
+                channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(ChannelFuture f) throws Exception {
+                        if (f.isSuccess()) {
+                            responseFuture.setSendRequestOK(true);
+                            return;
+                        }
+                        requestFail(opaque);
+                        log.warn("send a request command to channel <{}> failed.", RemotingHelper.parseChannelRemoteAddr(channel));
+                    }
+
+
+                });
+            } catch (Exception e) {
+                responseFuture.release();
+                log.warn("send a request command to channel <" + RemotingHelper.parseChannelRemoteAddr(channel) + "> Exception", e);
+                throw new RemotingSendRequestException(RemotingHelper.parseChannelRemoteAddr(channel), e);
+            }
+        }
+    }
+
+    private void requestFail(int opaque) {
+
     }
 
     class NettyEventExecutor extends ServiceThread {

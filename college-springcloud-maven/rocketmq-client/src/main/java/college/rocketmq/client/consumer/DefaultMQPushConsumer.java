@@ -1,16 +1,12 @@
 package college.rocketmq.client.consumer;
 
-import college.rocket.common.message.MessageExt;
 import college.rocketmq.client.ClientConfig;
 import college.rocketmq.client.consumer.exception.MQClientException;
-import college.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import college.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import college.rocketmq.client.consumer.listener.MessageListener;
 import college.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import college.rocketmq.client.impl.DefaultMQPushConsumerImpl;
 import lombok.Data;
-
-import java.util.List;
 
 /**
  * @author: xuxianbei
@@ -23,6 +19,8 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     private String consumerGroup;
     private MessageListener messageListener;
+
+    private int pullBatchSize = 32;
 
     protected final transient DefaultMQPushConsumerImpl defaultMQPushConsumerImpl;
 
@@ -41,5 +39,9 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
         setConsumerGroup("college");
         defaultMQPushConsumerImpl.start();
 
+    }
+
+    public void subscribe(String topic, String subExpression) throws MQClientException {
+        this.defaultMQPushConsumerImpl.subscribe(withNamespace(topic), subExpression);
     }
 }

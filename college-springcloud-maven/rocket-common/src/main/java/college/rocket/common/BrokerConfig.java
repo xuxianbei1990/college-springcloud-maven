@@ -20,6 +20,8 @@ public class BrokerConfig {
     private int sendMessageThreadPoolNums = 1;
     private int sendThreadPoolQueueCapacity = 10000;
 
+    private boolean longPollingEnable = true;
+
     private boolean forceRegister = true;
 
     private String brokerClusterName = "DefaultCluster";

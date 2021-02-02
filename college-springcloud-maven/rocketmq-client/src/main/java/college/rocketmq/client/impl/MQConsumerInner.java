@@ -7,4 +7,6 @@ package college.rocketmq.client.impl;
  * Version:V1.0
  */
 public interface MQConsumerInner {
+
+    void doRebalance();
 }

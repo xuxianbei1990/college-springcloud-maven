@@ -3,6 +3,7 @@ package college.rocket.remoting;
 import college.rocket.remoting.exception.RemotingConnectException;
 import college.rocket.remoting.exception.RemotingSendRequestException;
 import college.rocket.remoting.exception.RemotingTimeoutException;
+import college.rocket.remoting.exception.RemotingTooMuchRequestException;
 import college.rocket.remoting.protocol.RemotingCommand;
 
 import java.util.List;
@@ -22,4 +23,8 @@ public interface RemotingClient extends RemotingService {
     RemotingCommand invokeSync(final String addr, final RemotingCommand request,
                                final long timeoutMillis) throws InterruptedException, RemotingConnectException,
             RemotingSendRequestException, RemotingTimeoutException;
+
+    void invokeAsync(final String addr, final RemotingCommand request, final long timeoutMillis,
+                     final InvokeCallback invokeCallback) throws InterruptedException, RemotingConnectException,
+            RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException;
 }
