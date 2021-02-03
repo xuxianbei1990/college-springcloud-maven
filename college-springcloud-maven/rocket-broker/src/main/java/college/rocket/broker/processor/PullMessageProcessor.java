@@ -9,10 +9,14 @@ import college.rocket.common.protocol.heartbeat.SubscriptionData;
 import college.rocket.remoting.exception.RemotingCommandException;
 import college.rocket.remoting.netty.AsyncNettyRequestProcessor;
 import college.rocket.remoting.netty.NettyRequestProcessor;
+import college.rocket.remoting.netty.RequestTask;
 import college.rocket.remoting.protocol.RemotingCommand;
 import college.rocket.store.MessageFilter;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author: xuxianbei
@@ -20,6 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
  * Time: 13:58
  * Version:V1.0
  */
+@Slf4j
 public class PullMessageProcessor extends AsyncNettyRequestProcessor implements NettyRequestProcessor {
     private final BrokerController brokerController;
 
@@ -66,8 +71,44 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
                     response = null;
                     break;
                 }
-
-
         }
+        return response;
+    }
+
+    public void executeRequestWhenWakeup(final Channel channel,
+                                         final RemotingCommand request) {
+        Runnable run = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final RemotingCommand response = PullMessageProcessor.this.processRequest(channel, request, false);
+
+                    if (response != null) {
+                        response.setOpaque(request.getOpaque());
+                        response.markResponseType();
+                        try {
+                            channel.writeAndFlush(response).addListener(new ChannelFutureListener() {
+                                @Override
+                                public void operationComplete(ChannelFuture future) throws Exception {
+                                    if (!future.isSuccess()) {
+                                        log.error("processRequestWrapper response to {} failed",
+                                                future.channel().remoteAddress(), future.cause());
+                                        log.error(request.toString());
+                                        log.error(response.toString());
+                                    }
+                                }
+                            });
+                        } catch (Throwable e) {
+                            log.error("processRequestWrapper process request over, but response failed", e);
+                            log.error(request.toString());
+                            log.error(response.toString());
+                        }
+                    }
+                } catch (RemotingCommandException e1) {
+                    log.error("excuteRequestWhenWakeup run", e1);
+                }
+            }
+        };
+        this.brokerController.getPullMessageExecutor().submit(new RequestTask(run, channel, request));
     }
 }

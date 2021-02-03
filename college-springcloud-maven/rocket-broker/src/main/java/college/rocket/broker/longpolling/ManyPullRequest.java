@@ -1,6 +1,7 @@
 package college.rocket.broker.longpolling;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author: xuxianbei
@@ -13,5 +14,15 @@ public class ManyPullRequest {
 
     public synchronized void addPullRequest(final PullRequest pullRequest) {
         this.pullRequestList.add(pullRequest);
+    }
+
+    public synchronized List<PullRequest> cloneListAndClear() {
+        if (!this.pullRequestList.isEmpty()) {
+            List<PullRequest> result = (ArrayList<PullRequest>) this.pullRequestList.clone();
+            this.pullRequestList.clear();
+            return result;
+        }
+
+        return null;
     }
 }

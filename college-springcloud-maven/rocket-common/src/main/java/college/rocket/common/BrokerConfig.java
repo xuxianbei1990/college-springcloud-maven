@@ -18,7 +18,9 @@ public class BrokerConfig {
      */
     private int registerNameServerPeriod = 1000 * 30;
     private int sendMessageThreadPoolNums = 1;
+    private int pullMessageThreadPoolNums = 16 + Runtime.getRuntime().availableProcessors() * 2;
     private int sendThreadPoolQueueCapacity = 10000;
+    private int pullThreadPoolQueueCapacity = 100000;
 
     private boolean longPollingEnable = true;
 

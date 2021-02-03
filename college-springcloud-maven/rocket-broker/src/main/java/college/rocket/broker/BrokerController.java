@@ -6,6 +6,7 @@ import college.rocket.broker.latency.BrokerFixedThreadPoolExecutor;
 import college.rocket.broker.longpolling.NotifyMessageArrivingListener;
 import college.rocket.broker.longpolling.PullRequestHoldService;
 import college.rocket.broker.out.BrokerOuterAPI;
+import college.rocket.broker.processor.PullMessageProcessor;
 import college.rocket.broker.processor.SendMessageProcessor;
 import college.rocket.broker.topic.TopicConfigManager;
 import college.rocket.common.BrokerConfig;
@@ -51,6 +52,9 @@ public class BrokerController {
     private ExecutorService sendMessageExecutor;
     private TopicConfigManager topicConfigManager;
     private final BlockingQueue<Runnable> sendThreadPoolQueue;
+    private final BlockingQueue<Runnable> pullThreadPoolQueue;
+    private final PullMessageProcessor pullMessageProcessor;
+    private ExecutorService pullMessageExecutor;
 
     private MessageStore messageStore;
 
@@ -79,6 +83,10 @@ public class BrokerController {
         this.brokerStatsManager = new BrokerStatsManager(this.brokerConfig.getBrokerClusterName());
         //接收发送消息线程池队列
         this.sendThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getSendThreadPoolQueueCapacity());
+        // 拉取消息处理
+        this.pullMessageProcessor = new PullMessageProcessor(this);
+        //拉取线程池队列
+        this.pullThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getPullThreadPoolQueueCapacity());
     }
 
     public boolean initialize() throws CloneNotSupportedException {
@@ -95,6 +103,16 @@ public class BrokerController {
                 TimeUnit.MILLISECONDS,
                 this.sendThreadPoolQueue,
                 new ThreadFactoryImpl("SendMessageThread_"));
+
+
+        //拉取消息的线程池
+        this.pullMessageExecutor = new BrokerFixedThreadPoolExecutor(
+                this.brokerConfig.getPullMessageThreadPoolNums(),
+                this.brokerConfig.getPullMessageThreadPoolNums(),
+                1000 * 60,
+                TimeUnit.MILLISECONDS,
+                this.pullThreadPoolQueue,
+                new ThreadFactoryImpl("PullMessageThread_"));
 
         this.registerProcessor();
         //消息存储
