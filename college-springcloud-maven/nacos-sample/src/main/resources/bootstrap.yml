@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: chenfan-cloud-mcn
+  profiles:
+    active: ${profiles_active:dev}
+  cloud:
+    nacos:
+      server-addr: ${nacos.server:10.228.81.30}:${nacos.port:3848}
+      discovery:
+        namespace: ${profiles_active:dev}
+        group: ${group:DEV}_GROUP
+      config:
+        namespace: ${profiles_active:dev}
+        group: ${group:DEV}_GROUP
+        name: mcn
+        file-extension: yaml

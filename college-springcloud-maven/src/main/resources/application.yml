@@ -28,8 +28,8 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 rocketmq:
-  name-server: 192.168.138.3:9876
-#  name-server: 10.228.89.4:9876
+#  name-server: 192.168.138.3:9876
+  name-server: 10.228.81.30:9876
   producer:
     #    rocketMq以组概念发送
     group: springcloud-producter

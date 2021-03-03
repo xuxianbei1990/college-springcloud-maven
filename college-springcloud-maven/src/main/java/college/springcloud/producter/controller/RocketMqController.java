@@ -1,6 +1,8 @@
 package college.springcloud.producter.controller;
 
+import college.springcloud.producter.model.CfChargeCommon;
 import college.springcloud.producter.model.StudentVo;
+import com.alibaba.fastjson.JSONObject;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
@@ -16,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -223,6 +228,29 @@ public class RocketMqController {
         studentVo.setAge(26);
         studentVo.setName("鬼泣Tag99");
         return rocketMQTemplate.syncSend(topic + ":99", studentVo);
+    }
+
+    @GetMapping("test/mcn")
+    public SendResult testMcn() {
+        CfChargeCommon cfChargeCommon = new CfChargeCommon();
+        cfChargeCommon.setChargeType(1);
+        cfChargeCommon.setArapType("AR");
+        cfChargeCommon.setChargeSourceCode("xxb" + (new Random()).nextInt());
+        cfChargeCommon.setChargeSourceDetail("xxb" + (new Random()).nextInt());
+        cfChargeCommon.setAmountPp(BigDecimal.ZERO);
+        cfChargeCommon.setBalance("xxb");
+        cfChargeCommon.setFinanceEntity("ssd");
+        cfChargeCommon.setInvoiceTitle("asdf");
+        cfChargeCommon.setInvoiceTitleName("qweqwe");
+        cfChargeCommon.setCreateBy(1L);
+        cfChargeCommon.setCreateName("xxf");
+        cfChargeCommon.setTenantId(2L);
+        cfChargeCommon.setCompanyId(3L);
+        cfChargeCommon.setUpdateDate(LocalDateTime.now());
+        cfChargeCommon.setUpdateBy(2L);
+        cfChargeCommon.setSettTemplate(1);
+        cfChargeCommon.setTaxRate(BigDecimal.ONE);
+        return rocketMQTemplate.syncSend("topic_mcn_data_to_finance", JSONObject.toJSONString(cfChargeCommon));
     }
 
 }
