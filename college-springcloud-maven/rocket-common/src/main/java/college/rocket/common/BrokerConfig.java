@@ -22,6 +22,8 @@ public class BrokerConfig {
     private int sendThreadPoolQueueCapacity = 10000;
     private int pullThreadPoolQueueCapacity = 100000;
 
+    private int filterServerNums = 0;
+
     private boolean longPollingEnable = true;
 
     private boolean forceRegister = true;

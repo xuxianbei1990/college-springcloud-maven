@@ -1,6 +1,6 @@
 package college.rocket.broker;
 
-import college.rocket.broker.client.ClientHousekeepingService;
+import college.rocket.broker.client.*;
 import college.rocket.broker.filtersrv.FilterServerManager;
 import college.rocket.broker.latency.BrokerFixedThreadPoolExecutor;
 import college.rocket.broker.longpolling.NotifyMessageArrivingListener;
@@ -47,6 +47,10 @@ public class BrokerController {
     private final MessageArrivingListener messageArrivingListener;
     private final PullRequestHoldService pullRequestHoldService;
     private final BrokerOuterAPI brokerOuterAPI;
+
+    private final ConsumerManager consumerManager;
+    private final ConsumerIdsChangeListener consumerIdsChangeListener;
+    private final ProducerManager producerManager;
     private final ClientHousekeepingService clientHousekeepingService;
     private final FilterServerManager filterServerManager;
     private ExecutorService sendMessageExecutor;
@@ -73,12 +77,17 @@ public class BrokerController {
         this.messageStoreConfig = messageStoreConfig;
         this.brokerOuterAPI = new BrokerOuterAPI(nettyClientConfig);
         this.filterServerManager = new FilterServerManager(this);
+        //客户保持服务：实际就是把长期在线，但是没有数据更新的客户端主动关闭掉
         this.clientHousekeepingService = new ClientHousekeepingService(this);
         this.topicConfigManager = new TopicConfigManager(this);
         // 拉取请求持有服务
         this.pullRequestHoldService = new PullRequestHoldService(this);
         // 通知消息到达监听
         this.messageArrivingListener = new NotifyMessageArrivingListener(this.pullRequestHoldService);
+        // 消费id变更监听
+        this.consumerIdsChangeListener = new DefaultConsumerIdsChangeListener(this);
+        // 消费管理
+        this.consumerManager = new ConsumerManager(this.consumerIdsChangeListener);
         //broker 状态管理
         this.brokerStatsManager = new BrokerStatsManager(this.brokerConfig.getBrokerClusterName());
         //接收发送消息线程池队列
@@ -87,6 +96,8 @@ public class BrokerController {
         this.pullMessageProcessor = new PullMessageProcessor(this);
         //拉取线程池队列
         this.pullThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getPullThreadPoolQueueCapacity());
+        //生产者管理
+        this.producerManager = new ProducerManager();
     }
 
     public boolean initialize() throws CloneNotSupportedException {
