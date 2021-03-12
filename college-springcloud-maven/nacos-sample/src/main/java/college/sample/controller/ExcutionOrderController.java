@@ -1,12 +1,12 @@
 package college.sample.controller;
 
+import college.sample.dto.ExcutionSetPaidDTO;
 import college.sample.vo.ExcutionSettleInfoVO;
 import college.sample.vo.FinanceAccountInfoVO;
 import college.sample.vo.Res;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author: xuxianbei
@@ -32,4 +32,11 @@ public class ExcutionOrderController {
         financeAccountInfoVO.setAccountNumber("332315502151245612");
         return Res.ok(financeAccountInfoVO);
     }
+
+    @GetMapping("/setPaid")
+    Res<Object> setPaid(@RequestBody List<ExcutionSetPaidDTO> excutionSetPaidDTOS) {
+        System.out.println(excutionSetPaidDTOS.toString());
+        return Res.ok(1);
+    }
+
 }

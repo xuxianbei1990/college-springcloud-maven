@@ -8,6 +8,7 @@ import college.rocket.broker.longpolling.PullRequestHoldService;
 import college.rocket.broker.out.BrokerOuterAPI;
 import college.rocket.broker.processor.PullMessageProcessor;
 import college.rocket.broker.processor.SendMessageProcessor;
+import college.rocket.broker.slave.SlaveSynchronize;
 import college.rocket.broker.topic.TopicConfigManager;
 import college.rocket.common.BrokerConfig;
 import college.rocket.common.ThreadFactoryImpl;
@@ -21,6 +22,7 @@ import college.rocket.remoting.netty.NettyServerConfig;
 import college.rocket.store.DefaultMessageStore;
 import college.rocket.store.MessageArrivingListener;
 import college.rocket.store.MessageStore;
+import college.rocket.store.config.BrokerRole;
 import college.rocket.store.config.MessageStoreConfig;
 import college.rocket.store.stats.BrokerStatsManager;
 import lombok.Data;
@@ -49,6 +51,7 @@ public class BrokerController {
     private final BrokerOuterAPI brokerOuterAPI;
 
     private final ConsumerManager consumerManager;
+    private final SlaveSynchronize slaveSynchronize;
     private final ConsumerIdsChangeListener consumerIdsChangeListener;
     private final ProducerManager producerManager;
     private final ClientHousekeepingService clientHousekeepingService;
@@ -88,6 +91,8 @@ public class BrokerController {
         this.consumerIdsChangeListener = new DefaultConsumerIdsChangeListener(this);
         // 消费管理
         this.consumerManager = new ConsumerManager(this.consumerIdsChangeListener);
+        //从库同步
+        this.slaveSynchronize = new SlaveSynchronize(this);
         //broker 状态管理
         this.brokerStatsManager = new BrokerStatsManager(this.brokerConfig.getBrokerClusterName());
         //接收发送消息线程池队列
@@ -153,6 +158,13 @@ public class BrokerController {
             this.brokerOuterAPI.start();
         }
 
+        //Ha
+        if (!messageStoreConfig.isEnableDLegerCommitLog()) {
+            startProcessorByHa(messageStoreConfig.getBrokerRole());
+            handleSlaveSynchronize(messageStoreConfig.getBrokerRole());
+            this.registerBrokerAll(true, false, true);
+        }
+
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -165,6 +177,14 @@ public class BrokerController {
             }
         }, 1000 * 10, Math.max(10000, Math.min(brokerConfig.getRegisterNameServerPeriod(), 60000)), TimeUnit.MILLISECONDS);
 
+    }
+
+    private void startProcessorByHa(BrokerRole role) {
+        if (BrokerRole.SLAVE != role) {
+//            if (this.transactionalMessageCheckService != null) {
+//                this.transactionalMessageCheckService.start();
+//            }
+        }
     }
 
     public synchronized void registerBrokerAll(final boolean checkOrderConfig, boolean oneway, boolean forceRegister) {

@@ -35,4 +35,6 @@ public class MessageStoreConfig {
 
     private int flushCommitLogLeastPages = 4;
 
+    private boolean enableDLegerCommitLog = false;
+
 }
