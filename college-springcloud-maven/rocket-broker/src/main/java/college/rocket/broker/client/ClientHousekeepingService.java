@@ -35,6 +35,7 @@ public class ClientHousekeepingService implements ChannelEventListener {
                 try {
                     /**
                      * 就是把链接broker的客户端，长期没有更新的都给关掉
+                     * 频率1秒一次
                      */
                     ClientHousekeepingService.this.scanExceptionChannel();
                 } catch (Throwable e) {
@@ -45,6 +46,7 @@ public class ClientHousekeepingService implements ChannelEventListener {
     }
 
     private void scanExceptionChannel() {
+        //这三个方法逻辑都差不多，就是用当前时间-记录最后一次更新时间 大于配置的超时时间关闭nettyChannel
         this.brokerController.getProducerManager().scanNotActiveChannel();
         this.brokerController.getConsumerManager().scanNotActiveChannel();
         this.brokerController.getFilterServerManager().scanNotActiveChannel();

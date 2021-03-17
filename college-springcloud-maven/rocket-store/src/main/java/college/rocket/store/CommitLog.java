@@ -89,6 +89,10 @@ public class CommitLog {
         return CompletableFuture.completedFuture(PutMessageStatus.PUT_OK);
     }
 
+    public long getMaxOffset() {
+        return this.mappedFileQueue.getMaxOffset();
+    }
+
     abstract class FlushCommitLogService extends ServiceThread {
         protected static final int RETRY_TIMES_OVER = 10;
     }

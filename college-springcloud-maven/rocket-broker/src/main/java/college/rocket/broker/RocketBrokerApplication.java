@@ -8,6 +8,8 @@ import college.rocket.store.config.MessageStoreConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.IOException;
+
 
 public class RocketBrokerApplication {
 
@@ -44,7 +46,7 @@ public class RocketBrokerApplication {
         boolean initResult = false;
         try {
             initResult = controller.initialize();
-        } catch (CloneNotSupportedException e) {
+        } catch (CloneNotSupportedException | IOException e) {
             e.printStackTrace();
         }
         if (!initResult) {

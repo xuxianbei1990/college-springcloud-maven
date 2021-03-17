@@ -17,4 +17,11 @@ public interface MessageStore {
     PutMessageResult putMessage(final MessageExtBrokerInner msg);
 
     long getMaxOffsetInQueue(final String topic, final int queueId);
+
+    /**
+     * Update HA master address.
+     *
+     * @param newAddr new address.
+     */
+    void updateHaMasterAddress(final String newAddr);
 }

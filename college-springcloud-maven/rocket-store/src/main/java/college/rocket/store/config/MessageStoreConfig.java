@@ -16,6 +16,8 @@ public class MessageStoreConfig {
     private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
     private boolean useReentrantLockWhenPutMessage = false;
 
+    private int haSendHeartbeatInterval = 1000 * 5;
+
     private int haListenPort = 10912;
 
     private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
@@ -36,5 +38,7 @@ public class MessageStoreConfig {
     private int flushCommitLogLeastPages = 4;
 
     private boolean enableDLegerCommitLog = false;
+
+    private BrokerRole brokerRole = BrokerRole.ASYNC_MASTER;
 
 }

@@ -15,4 +15,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DataVersion extends RemotingSerializable {
     private long timestamp = System.currentTimeMillis();
     private AtomicLong counter = new AtomicLong(0);
+
+    public void nextVersion() {
+        this.timestamp = System.currentTimeMillis();
+        this.counter.incrementAndGet();
+    }
 }

@@ -1,6 +1,7 @@
 package college.rocket.broker.out;
 
 import college.rocket.broker.latency.BrokerFixedThreadPoolExecutor;
+import college.rocket.common.MixAll;
 import college.rocket.common.ThreadFactoryImpl;
 import college.rocket.common.UtilAll;
 import college.rocket.common.namesrv.RegisterBrokerResult;
@@ -148,6 +149,24 @@ public class BrokerOuterAPI {
         }
 
         this.remotingClient.updateNameServerAddressList(lst);
+    }
+
+    public TopicConfigSerializeWrapper getAllTopicConfig(
+            final String addr) throws RemotingConnectException, RemotingSendRequestException,
+            RemotingTimeoutException, InterruptedException, MQBrokerException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ALL_TOPIC_CONFIG, null);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(true, addr), request, 3000);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return TopicConfigSerializeWrapper.decode(response.getBody(), TopicConfigSerializeWrapper.class);
+            }
+            default:
+                break;
+        }
+
+        throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public void start() {

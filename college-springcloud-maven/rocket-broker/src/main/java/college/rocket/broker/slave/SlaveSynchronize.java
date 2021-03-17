@@ -34,9 +34,18 @@ public class SlaveSynchronize {
         String masterAddrBak = this.masterAddr;
         if (masterAddrBak != null && !masterAddrBak.equals(brokerController.getBrokerAddr())) {
             try {
-//                TopicConfigSerializeWrapper topicWrapper =
-//                        this.brokerController.getBrokerOuterAPI().getAllTopicConfig(masterAddrBak);
+                //好像是同步全局配置信息
+                //从哪里拿到从节点的服务器地址
+                TopicConfigSerializeWrapper topicWrapper =
+                        this.brokerController.getBrokerOuterAPI().getAllTopicConfig(masterAddrBak);
+                if (!this.brokerController.getTopicConfigManager().getDataVersion()
+                        .equals(topicWrapper.getDataVersion())) {
 
+
+
+
+
+                }
 
             } catch (Exception e) {
                 log.error("SyncTopicConfig Exception, {}", masterAddrBak, e);

@@ -50,4 +50,12 @@ public class MappedFileQueue {
     public MappedFile findMappedFileByOffset(final long offset, final boolean returnFirstOnNotFound) {
         return null;
     }
+
+    public long getMaxOffset() {
+        MappedFile mappedFile = getLastMappedFile();
+        if (mappedFile != null) {
+            return mappedFile.getFileFromOffset() + mappedFile.getReadPosition();
+        }
+        return 0;
+    }
 }

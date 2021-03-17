@@ -15,4 +15,6 @@ public class RegisterBrokerResult {
     private String masterAddr;
 
     private KVTable kvTable;
+
+    private String haServerAddr;
 }

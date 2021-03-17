@@ -28,8 +28,11 @@ import org.slf4j.Marker;
 
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.*;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -171,4 +174,34 @@ public class RemotingUtil {
         });
     }
 
+    public static Selector openSelector() throws IOException {
+        Selector result = null;
+        //是否Linux平台
+        if (isLinuxPlatform()) {
+            try {
+                //是否启动Epoll
+                final Class<?> providerClazz = Class.forName("sun.nio.ch.EPollSelectorProvider");
+                if (providerClazz != null) {
+                    try {
+                        final Method method = providerClazz.getMethod("provider");
+                        if (method != null) {
+                            final SelectorProvider selectorProvider = (SelectorProvider) method.invoke(null);
+                            if (selectorProvider != null) {
+                                result = selectorProvider.openSelector();
+                            }
+                        }
+                    } catch (final Exception e) {
+                        log.warn("Open ePoll Selector for linux platform exception", e);
+                    }
+                }
+            } catch (final Exception e) {
+                // ignore
+            }
+        }
+        if (result == null) {
+            result = Selector.open();
+        }
+
+        return result;
+    }
 }

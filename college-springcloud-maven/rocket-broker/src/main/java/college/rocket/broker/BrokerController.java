@@ -28,6 +28,7 @@ import college.rocket.store.stats.BrokerStatsManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -62,7 +63,9 @@ public class BrokerController {
     private final BlockingQueue<Runnable> pullThreadPoolQueue;
     private final PullMessageProcessor pullMessageProcessor;
     private ExecutorService pullMessageExecutor;
+    private boolean updateMasterHAServerAddrPeriodically = false;
 
+    //DefaultMessageStore
     private MessageStore messageStore;
 
     private RemotingServer remotingServer;
@@ -105,7 +108,7 @@ public class BrokerController {
         this.producerManager = new ProducerManager();
     }
 
-    public boolean initialize() throws CloneNotSupportedException {
+    public boolean initialize() throws CloneNotSupportedException, IOException {
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.clientHousekeepingService);
         if (this.brokerConfig.getNamesrvAddr() != null) {
             this.brokerOuterAPI.updateNameServerAddressList(this.brokerConfig.getNamesrvAddr());
@@ -213,12 +216,21 @@ public class BrokerController {
         if (registerBrokerResultList.size() > 0) {
             RegisterBrokerResult registerBrokerResult = registerBrokerResultList.get(0);
             if (registerBrokerResult != null) {
+                if (this.updateMasterHAServerAddrPeriodically && registerBrokerResult.getHaServerAddr() != null) {
+                    this.messageStore.updateHaMasterAddress(registerBrokerResult.getHaServerAddr());
+                }
 
+                //注册时候可以拿到Master地址，那么应该是NameSrv赋值的
+                this.slaveSynchronize.setMasterAddr(registerBrokerResult.getMasterAddr());
             }
         }
 
     }
 
+    /**
+     * 同一个IP地址，监听端口主要用于Master的Slave同步
+     * @return
+     */
     public String getHAServerAddr() {
         return this.brokerConfig.getBrokerIP2() + ":" + this.messageStoreConfig.getHaListenPort();
     }
