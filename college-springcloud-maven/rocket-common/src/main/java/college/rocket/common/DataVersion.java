@@ -20,4 +20,9 @@ public class DataVersion extends RemotingSerializable {
         this.timestamp = System.currentTimeMillis();
         this.counter.incrementAndGet();
     }
+
+    public void assignNewOne(final DataVersion dataVersion) {
+        this.timestamp = dataVersion.timestamp;
+        this.counter.set(dataVersion.counter.get());
+    }
 }

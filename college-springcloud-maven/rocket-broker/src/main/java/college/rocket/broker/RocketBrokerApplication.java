@@ -18,7 +18,11 @@ public class RocketBrokerApplication {
     }
 
     private static void start(BrokerController controller) {
-        controller.start();
+        try {
+            controller.start();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
         String tip = "The broker[" + controller.getBrokerConfig().getBrokerName() + ", "
                 + controller.getBrokerAddr() + "] boot success. serializeType=" + RemotingCommand.getSerializeTypeConfigInThisServer();
 

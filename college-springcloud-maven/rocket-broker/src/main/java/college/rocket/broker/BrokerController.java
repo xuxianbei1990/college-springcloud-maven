@@ -65,6 +65,8 @@ public class BrokerController {
     private ExecutorService pullMessageExecutor;
     private boolean updateMasterHAServerAddrPeriodically = false;
 
+    private Future<?> slaveSyncFuture;
+
     //DefaultMessageStore
     private MessageStore messageStore;
 
@@ -149,7 +151,12 @@ public class BrokerController {
 
     }
 
-    public void start() {
+    public void start() throws Exception{
+
+        //消息存储
+        if (this.messageStore != null) {
+            this.messageStore.start();
+        }
 
         //远程服务启动
         if (this.remotingServer != null) {
@@ -161,9 +168,10 @@ public class BrokerController {
             this.brokerOuterAPI.start();
         }
 
-        //Ha
+        //Ha 最新版RocketMq是通过Raft协议实现的。
         if (!messageStoreConfig.isEnableDLegerCommitLog()) {
             startProcessorByHa(messageStoreConfig.getBrokerRole());
+            //如果是主从，把主的信息同步过来，通过api方式
             handleSlaveSynchronize(messageStoreConfig.getBrokerRole());
             this.registerBrokerAll(true, false, true);
         }
@@ -180,6 +188,21 @@ public class BrokerController {
             }
         }, 1000 * 10, Math.max(10000, Math.min(brokerConfig.getRegisterNameServerPeriod(), 60000)), TimeUnit.MILLISECONDS);
 
+    }
+
+    private void handleSlaveSynchronize(BrokerRole role) {
+        if (role == BrokerRole.SLAVE) {
+            slaveSyncFuture = this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        BrokerController.this.slaveSynchronize.syncAll();
+                    } catch (Throwable e) {
+                        log.error("ScheduledTask SlaveSynchronize syncAll error.", e);
+                    }
+                }
+            }, 1000 * 3, 1000 * 10, TimeUnit.MILLISECONDS);
+        }
     }
 
     private void startProcessorByHa(BrokerRole role) {
@@ -222,6 +245,11 @@ public class BrokerController {
 
                 //注册时候可以拿到Master地址，那么应该是NameSrv赋值的
                 this.slaveSynchronize.setMasterAddr(registerBrokerResult.getMasterAddr());
+
+                if (checkOrderConfig) {
+                    //大概意思是更新TopicConfig信息的
+                    this.getTopicConfigManager().updateOrderTopicConfig(registerBrokerResult.getKvTable());
+                }
             }
         }
 

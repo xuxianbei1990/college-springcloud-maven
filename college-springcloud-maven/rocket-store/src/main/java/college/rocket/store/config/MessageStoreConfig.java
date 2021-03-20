@@ -16,7 +16,15 @@ public class MessageStoreConfig {
     private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
     private boolean useReentrantLockWhenPutMessage = false;
 
+    private int flushIntervalConsumeQueue = 1000;
+
+    private int flushConsumeQueueThoroughInterval = 1000 * 60;
+
+    private int flushConsumeQueueLeastPages = 2;
+
     private int haSendHeartbeatInterval = 1000 * 5;
+
+    private int haHousekeepingInterval = 1000 * 20;
 
     private int haListenPort = 10912;
 

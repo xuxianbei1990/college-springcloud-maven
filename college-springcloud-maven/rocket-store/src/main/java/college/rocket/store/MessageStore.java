@@ -24,4 +24,6 @@ public interface MessageStore {
      * @param newAddr new address.
      */
     void updateHaMasterAddress(final String newAddr);
+
+    void start() throws Exception;
 }

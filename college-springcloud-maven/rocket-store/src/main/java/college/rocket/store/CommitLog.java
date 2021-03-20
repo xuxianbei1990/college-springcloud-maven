@@ -53,6 +53,11 @@ public class CommitLog {
         this.putMessageLock = defaultMessageStore.getMessageStoreConfig().isUseReentrantLockWhenPutMessage() ? new PutMessageReentrantLock() : new PutMessageSpinLock();
     }
 
+    public void start(){
+        this.flushCommitLogService.start();
+
+    }
+
     public CompletableFuture<PutMessageResult> asyncPutMessage(MessageExtBrokerInner msg) {
         AppendMessageResult result = null;
         String topic = msg.getTopic();

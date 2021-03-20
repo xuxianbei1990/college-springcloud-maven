@@ -6,5 +6,12 @@ package college.rocket.common;
  * Time: 17:54
  * Version:V1.0
  */
-public class ConfigManager {
+public abstract class ConfigManager {
+
+    public synchronized void persist() {
+        String jsonString = this.encode(true);
+        //就是把Topic 序列化本地磁盘上了
+    }
+
+    public abstract String encode(final boolean prettyFormat);
 }

@@ -51,4 +51,8 @@ public abstract class ServiceThread implements Runnable {
         this.thread.start();
     }
 
+    public void setDaemon(boolean daemon) {
+        isDaemon = daemon;
+    }
+
 }
