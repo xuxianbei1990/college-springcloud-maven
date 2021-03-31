@@ -4,6 +4,7 @@ import college.rocket.common.BrokerConfig;
 import college.rocket.remoting.common.ServiceThread;
 import college.rocket.store.config.BrokerRole;
 import college.rocket.store.config.MessageStoreConfig;
+import college.rocket.store.dledger.DLedgerCommitLog;
 import college.rocket.store.ha.HAService;
 import college.rocket.store.stats.BrokerStatsManager;
 import lombok.Data;
@@ -47,7 +48,12 @@ public class DefaultMessageStore implements MessageStore {
 
     public DefaultMessageStore(final MessageStoreConfig messageStoreConfig, final BrokerStatsManager brokerStatsManager,
                                final MessageArrivingListener messageArrivingListener, final BrokerConfig brokerConfig) throws IOException {
-        this.commitLog = new CommitLog(this);
+        if (messageStoreConfig.isEnableDLegerCommitLog()) {
+            this.commitLog = new DLedgerCommitLog(this);
+        } else {
+            this.commitLog = new CommitLog(this);
+        }
+
         this.messageStoreConfig = messageStoreConfig;
         this.allocateMappedFileService = new AllocateMappedFileService(this);
         this.flushConsumeQueueService = new FlushConsumeQueueService();

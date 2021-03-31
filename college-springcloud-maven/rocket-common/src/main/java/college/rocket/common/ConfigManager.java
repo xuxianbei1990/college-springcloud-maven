@@ -14,4 +14,6 @@ public abstract class ConfigManager {
     }
 
     public abstract String encode(final boolean prettyFormat);
+
+    public abstract boolean load();
 }

@@ -1,6 +1,7 @@
 package college.rocket.broker;
 
 import college.rocket.broker.client.*;
+import college.rocket.broker.dledger.DLedgerRoleChangeHandler;
 import college.rocket.broker.filtersrv.FilterServerManager;
 import college.rocket.broker.latency.BrokerFixedThreadPoolExecutor;
 import college.rocket.broker.longpolling.NotifyMessageArrivingListener;
@@ -24,6 +25,7 @@ import college.rocket.store.MessageArrivingListener;
 import college.rocket.store.MessageStore;
 import college.rocket.store.config.BrokerRole;
 import college.rocket.store.config.MessageStoreConfig;
+import college.rocket.store.dledger.DLedgerCommitLog;
 import college.rocket.store.stats.BrokerStatsManager;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +113,21 @@ public class BrokerController {
     }
 
     public boolean initialize() throws CloneNotSupportedException, IOException {
+        //主题类加载,从C:\Users\2250\store\config 加载，这里的C:\Users\2250是本机账户
+        boolean result = this.topicConfigManager.load();
+
+        if (result) {
+            //消息存储
+            this.messageStore = new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager, this.messageArrivingListener,
+                    this.brokerConfig);
+            //是否开启了DLeger 主要功能是根据raft协议实现自从选举master。解决master/salve master 挂掉之后，需要手动处理master情况
+            if (messageStoreConfig.isEnableDLegerCommitLog()) {
+                DLedgerRoleChangeHandler roleChangeHandler = new DLedgerRoleChangeHandler(this, (DefaultMessageStore) messageStore);
+                ((DLedgerCommitLog) ((DefaultMessageStore) messageStore).getCommitLog()).getdLedgerServer().getdLedgerLeaderElector().addRoleChangeHandler(roleChangeHandler);
+            }
+
+        }
+
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.clientHousekeepingService);
         if (this.brokerConfig.getNamesrvAddr() != null) {
             this.brokerOuterAPI.updateNameServerAddressList(this.brokerConfig.getNamesrvAddr());
@@ -136,9 +153,7 @@ public class BrokerController {
                 new ThreadFactoryImpl("PullMessageThread_"));
 
         this.registerProcessor();
-        //消息存储
-        this.messageStore = new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager, this.messageArrivingListener,
-                this.brokerConfig);
+
 
         return true;
     }
@@ -151,7 +166,7 @@ public class BrokerController {
 
     }
 
-    public void start() throws Exception{
+    public void start() throws Exception {
 
         //消息存储
         if (this.messageStore != null) {
@@ -257,6 +272,7 @@ public class BrokerController {
 
     /**
      * 同一个IP地址，监听端口主要用于Master的Slave同步
+     *
      * @return
      */
     public String getHAServerAddr() {

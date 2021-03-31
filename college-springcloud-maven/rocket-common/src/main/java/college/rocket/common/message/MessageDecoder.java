@@ -18,6 +18,8 @@ public class MessageDecoder {
 
     public static final char PROPERTY_SEPARATOR = 2;
 
+    public static final int PHY_POS_POSITION = 4 + 4 + 4 + 4 + 4 + 8;
+
     public final static Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
     public static String messageProperties2String(Map<String, String> properties) {

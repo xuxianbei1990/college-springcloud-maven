@@ -20,6 +20,19 @@ public class MessageStoreConfig {
 
     private int flushConsumeQueueThoroughInterval = 1000 * 60;
 
+    //删除时间
+    private String deleteWhen = "04";
+
+    //文件预留时间
+    private int fileReservedTime = 72;
+
+    private String dLegerSelfId;
+
+    private String dLegerGroup;
+    private String dLegerPeers;
+
+    private String storePathRootDir = System.getProperty("user.home") + File.separator + "store";
+
     private int flushConsumeQueueLeastPages = 2;
 
     private int haSendHeartbeatInterval = 1000 * 5;
@@ -31,6 +44,8 @@ public class MessageStoreConfig {
     private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
 
     private int maxMessageSize = 1024 * 1024 * 4;
+
+    private boolean cleanFileForciblyEnable = true;
 
     private String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
             + File.separator + "commitlog";

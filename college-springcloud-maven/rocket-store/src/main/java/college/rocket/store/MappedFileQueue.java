@@ -58,4 +58,8 @@ public class MappedFileQueue {
         }
         return 0;
     }
+
+    public boolean load() {
+        return false;
+    }
 }

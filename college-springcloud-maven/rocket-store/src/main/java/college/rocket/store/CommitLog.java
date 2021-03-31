@@ -1,5 +1,6 @@
 package college.rocket.store;
 
+import college.rocket.common.UtilAll;
 import college.rocket.common.message.MessageDecoder;
 import college.rocket.common.message.MessageExt;
 import college.rocket.common.sysflag.MessageSysFlag;
@@ -53,9 +54,24 @@ public class CommitLog {
         this.putMessageLock = defaultMessageStore.getMessageStoreConfig().isUseReentrantLockWhenPutMessage() ? new PutMessageReentrantLock() : new PutMessageSpinLock();
     }
 
-    public void start(){
+    public void start() {
         this.flushCommitLogService.start();
 
+    }
+
+    public void shutdown() {
+//        this.flushCommitLogService.shutdown();
+    }
+
+
+    public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
+        msg.setStoreTimestamp(System.currentTimeMillis());
+        msg.setBodyCRC(UtilAll.crc32(msg.getBody()));
+        AppendMessageResult result = null;
+
+        StoreStatsService storeStatsService = this.defaultMessageStore.getStoreStatsService();
+        String topic = msg.getTopic();
+        return null;
     }
 
     public CompletableFuture<PutMessageResult> asyncPutMessage(MessageExtBrokerInner msg) {
@@ -164,6 +180,18 @@ public class CommitLog {
                 }
             }
         }
+    }
+
+    public boolean load() {
+        boolean result = this.mappedFileQueue.load();
+        log.info("load commit log " + (result ? "OK" : "Failed"));
+        return result;
+    }
+
+    public long flush() {
+//        this.mappedFileQueue.commit(0);
+        this.mappedFileQueue.flush(0);
+        return this.mappedFileQueue.getFlushedWhere();
     }
 
     //异步刷盘

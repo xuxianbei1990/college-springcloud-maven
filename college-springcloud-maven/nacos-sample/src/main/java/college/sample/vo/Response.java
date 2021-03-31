@@ -27,6 +27,10 @@ public class Response<T> {
     )
     private T obj;
 
+    public static <T> Response ok(T obj) {
+        return new Response(200, "succcess", obj);
+    }
+
     public Response(int code, String message, T obj) {
         this.code = code;
         this.message = message;

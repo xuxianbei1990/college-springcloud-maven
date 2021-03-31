@@ -241,4 +241,9 @@ public class ExcutionSettleInfoVO implements Serializable {
      */
     @ApiModelProperty("借款金额")
     private BigDecimal loanAmount;
+
+    /**
+     *  结算单模板(1, "内部红人执行单模板";2, "外部红人执行单模板";3, "红人采购费/年度返点/客户返点模板")
+     */
+    private Integer settleTemplate;
 }

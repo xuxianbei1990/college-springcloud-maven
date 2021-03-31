@@ -57,4 +57,9 @@ public class TopicConfigManager extends ConfigManager {
         topicConfigSerializeWrapper.setDataVersion(this.dataVersion);
         return topicConfigSerializeWrapper.toJson(prettyFormat);
     }
+
+    @Override
+    public boolean load() {
+        return false;
+    }
 }

@@ -250,7 +250,7 @@ public class RocketMqController {
         cfChargeCommon.setUpdateBy(2L);
         cfChargeCommon.setSettTemplate(1);
         cfChargeCommon.setTaxRate(BigDecimal.ONE);
-        return rocketMQTemplate.syncSend("topic_mcn_data_to_finance", JSONObject.toJSONString(cfChargeCommon));
+        return rocketMQTemplate.syncSend("MQ_mcn_charge_finance_test", JSONObject.toJSONString(cfChargeCommon));
     }
 
 }

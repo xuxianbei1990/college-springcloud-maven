@@ -10,10 +10,11 @@ import org.springframework.stereotype.Service;
  * Date: 2020/9/15
  * Time: 14:26
  * Version:V1.0
+ * 如果生产方按照tag进行发送，消费方没有打上tag，那么是消费全部tag
  */
 @Service
-@RocketMQMessageListener(topic = "${rocketmq.topic}", consumerGroup = "${rocketmq.consumer.group}",
-        selectorExpression = "97"
+@RocketMQMessageListener(topic = "${rocketmq.topic}", consumerGroup = "${rocketmq.consumer.group}"
+        /*,selectorExpression = "97"*/
 //     测试顺序消费用的   , consumeMode = ConsumeMode.ORDERLY
 )
 //以接口方式实现主要是为了回调
