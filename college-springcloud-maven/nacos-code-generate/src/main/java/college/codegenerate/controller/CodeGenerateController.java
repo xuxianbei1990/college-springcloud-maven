@@ -43,7 +43,7 @@ public class CodeGenerateController {
         String redisKey = key + localDateTime.format(DateTimeFormatter.ofPattern("YYMMdd"));
         RedisAtomicIntegerCustom redisAtomicInteger = getRedisAtomicInteger(redisKey);
 
-        int i = redisAtomicInteger.getAndAdd(1);
+        int i = redisAtomicInteger.decrementAndGet();
         if (i >= MAX_GENERATE_ID) {
             synchronized (uniqueIdLock) {
                 if (redisAtomicInteger.get() >= MAX_GENERATE_ID) {
@@ -73,7 +73,7 @@ public class CodeGenerateController {
      * @return
      */
     private RedisAtomicIntegerCustom getRedisAtomicInteger(String key) {
-        RedisAtomicIntegerCustom redisCount = new RedisAtomicIntegerCustom(key, redisTemplate.getConnectionFactory(), 0);
+        RedisAtomicIntegerCustom redisCount = new RedisAtomicIntegerCustom(key, redisTemplate.getConnectionFactory(), MAX_GENERATE_ID);
         redisCount.expire(31, TimeUnit.DAYS);
         return redisCount;
     }
