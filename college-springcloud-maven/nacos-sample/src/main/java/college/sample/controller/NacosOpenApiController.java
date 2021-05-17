@@ -1,9 +1,10 @@
 package college.sample.controller;
 
 import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
-import com.alibaba.nacos.api.annotation.NacosInjected;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingService;
+import com.alibaba.nacos.api.naming.listener.Event;
+import com.alibaba.nacos.api.naming.listener.EventListener;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +30,12 @@ public class NacosOpenApiController {
     @GetMapping("/open/api")
     public List<Instance> openApi() throws NacosException {
         NamingService namingService = nacosDiscoveryProperties.namingServiceInstance();
+        namingService.subscribe("chenfan-cloud-process", "DEV_GROUP", new EventListener() {
+            @Override
+            public void onEvent(Event event) {
+                System.out.println("1");
+            }
+        });
         return namingService.getAllInstances("chenfan-cloud-mcn", "DEV_GROUP");
     }
 

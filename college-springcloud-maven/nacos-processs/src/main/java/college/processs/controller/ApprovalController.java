@@ -26,7 +26,8 @@ public class ApprovalController {
     }
 
     @PostMapping("{detal}")
-    public Response<String> starProcess(@RequestBody String value) {
+    public Response<String> starProcess(@RequestPart String detal) {
+        System.out.println(detal);
         return new Response(0, "success", String.valueOf(new Random().nextInt()));
     }
 }
