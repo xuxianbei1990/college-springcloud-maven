@@ -1,6 +1,9 @@
 package college.rocketmq.client.impl;
 
+import college.rocketmq.client.impl.consumer.PullRequest;
 import college.rocketmq.client.impl.consumer.RebalanceImpl;
+
+import java.util.List;
 
 /**
  * @author: xuxianbei
@@ -12,6 +15,11 @@ public class RebalancePushImpl extends RebalanceImpl {
 
     public RebalancePushImpl(DefaultMQPushConsumerImpl defaultMQPushConsumerImpl) {
         super(null, null, null, null);
+
+    }
+
+    @Override
+    public void dispatchPullRequest(List<PullRequest> pullRequestList) {
 
     }
 }
