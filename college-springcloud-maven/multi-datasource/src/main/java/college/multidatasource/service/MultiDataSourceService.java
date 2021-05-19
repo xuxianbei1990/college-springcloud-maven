@@ -22,6 +22,10 @@ public class MultiDataSourceService {
     @Resource
     private CfMultyImageMapper cfMultyImageMapper;
 
+    /**
+     * 这里defaultdb和yml配置的数据源要一致
+     * @return
+     */
     @DS("defaultdb")
     public List<CfMultyImage> testDataSource() {
         return cfMultyImageMapper.selectList(Wrappers.lambdaQuery(CfMultyImage.class));
