@@ -1,0 +1,44 @@
+spring:
+  datasource:
+    dynamic:
+      primary: defaultdb # 配置默认数据库
+      datasource:
+        defaultdb: # 数据源1配置
+          url: jdbc:mysql://10.228.81.19:38309/eop_finance_test?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
+          username: root
+          password: Chenfan@123.com.cn..
+          driver-class-name: com.mysql.cj.jdbc.Driver
+        tocdb: # 数据源2配置
+          url: jdbc:mysql://10.228.81.19:38309/eop_finance_dev?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
+          username: root
+          password: Chenfan@123.com.cn..
+          driver-class-name: com.mysql.cj.jdbc.Driver
+#        tocdb: # 数据源2配置
+#          url: jdbc:postgresql://10.228.88.171:5432/dw?characterEncoding=utf8&useUnicode=true&useSSL=false&serverTimezone=GMT%2B8
+#          username: finance
+#          password: finance
+#          driver-class-name: org.postgresql.Driver
+      durid:
+        initial-size: 1
+        max-active: 100
+        min-idle: 1
+        max-wait: 6000
+        pool-prepared-statements: true
+        max-open-prepared-statements: 20
+        validation-query: SELECT 1
+        test-on-borrow: true
+        test-on-return: false
+        test-while-idle: true
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 30000
+        remove-abandoned: true
+        remove-abandoned-timeout: 1800
+        filters: stat,slf4j
+
+
+mybatis-plus:
+  mapper-locations: classpath:college/multidatasource/**/dao/**/*.xml
+  configuration:
+    lazy-loading-enabled: true
+    cache-enabled: true
+    map-underscore-to-camel-case: true
