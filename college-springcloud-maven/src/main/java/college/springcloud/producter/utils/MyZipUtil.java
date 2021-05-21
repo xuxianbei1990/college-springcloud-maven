@@ -30,7 +30,7 @@ public class MyZipUtil {
     /**
      * 默认编码，使用平台相关编码
      */
-    private static final Charset DEFAULT_CHARSET = Charset.defaultCharset();
+    private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
     /**
      * 默认缓存大小 8192

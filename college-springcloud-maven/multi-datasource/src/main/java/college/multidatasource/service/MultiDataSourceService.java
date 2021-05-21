@@ -1,5 +1,6 @@
 package college.multidatasource.service;
 
+import college.multidatasource.annotation.MyDS;
 import college.multidatasource.dao.CfMultyImageMapper;
 import college.multidatasource.model.CfMultyImage;
 import com.baomidou.dynamic.datasource.annotation.DS;
@@ -23,12 +24,13 @@ public class MultiDataSourceService {
     private CfMultyImageMapper cfMultyImageMapper;
 
     /**
-     * 这里defaultdb和yml配置的数据源要一致
+     * 这里defaultdb和yml配置的数据源要一致,如果不一致，默认会使用主库，也就是master
      * @return
      */
     @DS("defaultdb")
+    @MyDS("伊斯贝拉")
     public List<CfMultyImage> testDataSource() {
-        return cfMultyImageMapper.selectList(Wrappers.lambdaQuery(CfMultyImage.class));
+        return testDataSource2();
     }
 
     @DS("tocdb")
