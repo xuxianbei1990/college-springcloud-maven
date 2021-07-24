@@ -27,6 +27,9 @@ spring:
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
+#mybatis-plus:
+#  mapper-locations: classpath:com/chenfan/**/dao/**/*.xml
+
 rocketmq:
 #  name-server: 192.168.138.3:9876
   name-server: 10.228.81.30:9876
