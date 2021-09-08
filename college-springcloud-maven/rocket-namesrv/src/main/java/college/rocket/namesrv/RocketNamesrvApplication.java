@@ -1,5 +1,6 @@
 package college.rocket.namesrv;
 
+import college.rocket.common.ShutdownHookThread;
 import college.rocket.common.namesrv.NamesrvConfig;
 import college.rocket.remoting.netty.NettyServerConfig;
 import college.rocket.remoting.protocol.RemotingCommand;
@@ -31,6 +32,19 @@ public class RocketNamesrvApplication {
 //            System.exit(-3);
             throw new RuntimeException("failure");
         }
+
+        /**
+         * 注册钩子函数
+         * 常用的编程技巧，如果代码中使用了线程池，一种优雅停
+         * 机的方式就是注册 JVM 钩子函数， JVM 进程关闭之前，先将线程池关闭 ，及时释放
+         * 资源
+         */
+        Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(() -> {
+            controller.shutdown();
+            return null;
+        }));
+
+
         controller.start();
 
         return controller;

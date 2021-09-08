@@ -11,6 +11,7 @@ import college.rocket.common.protocol.route.TopicRouteData;
 import io.netty.channel.Channel;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -29,11 +30,13 @@ public class RouteInfoManager {
     private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
+    private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 
     public RouteInfoManager() {
         this.clusterAddrTable = new HashMap(32);
         this.brokerAddrTable = new HashMap(128);
         this.brokerLiveTable = new HashMap<String, BrokerLiveInfo>(256);
+        this.filterServerTable = new HashMap(256);
     }
 
     public TopicRouteData pickupTopicRouteData(final String topic) {
@@ -161,4 +164,79 @@ public class RouteInfoManager {
             this.haServerAddr = haServerAddr;
         }
     }
+
+    /**
+     * 存活Broker表，Broker地址表，队列的broker，集群的broker，清楚掉
+     * @param remoteAddr
+     * @param channel
+     */
+    public void onChannelDestroy(String remoteAddr, Channel channel) {
+        String brokerAddrFound = null;
+        //用存活表查询，加读锁
+        if (channel != null) {
+            try {
+                try {
+                    this.lock.readLock().lockInterruptibly();
+                    Iterator<Map.Entry<String, BrokerLiveInfo>> itBrokerLiveTable =
+                            this.brokerLiveTable.entrySet().iterator();
+                    while (itBrokerLiveTable.hasNext()) {
+                        Map.Entry<String, BrokerLiveInfo> entry = itBrokerLiveTable.next();
+                        if (entry.getValue().getChannel() == channel) {
+                            brokerAddrFound = entry.getKey();
+                            break;
+                        }
+                    }
+                } finally {
+                    this.lock.readLock().unlock();
+                }
+            } catch (Exception e) {
+                log.error("onChannelDestroy Exception", e);
+            }
+        }
+
+        if (null == brokerAddrFound) {
+            brokerAddrFound = remoteAddr;
+        } else {
+            log.info(" the broker's channel destroyed, {}, clean it's data structure at once", brokerAddrFound);
+        }
+
+        if (!StringUtils.hasLength(brokerAddrFound)) {
+            try {
+                try {
+                    //加写锁
+                    lock.writeLock().lockInterruptibly();
+                    brokerLiveTable.remove(brokerAddrFound);
+                    filterServerTable.remove(brokerAddrFound);
+                    String brokerNameFound = null;
+                    boolean removeBrokerName = false;
+                    Iterator<Map.Entry<String, BrokerData>> itBrokerAddrTable =
+                            brokerAddrTable.entrySet().iterator();
+                    while (itBrokerAddrTable.hasNext() && null == brokerNameFound) {
+                        BrokerData brokerData = itBrokerAddrTable.next().getValue();
+                        Iterator<Map.Entry<Long, String>> it = brokerData.getBrokerAddrs().entrySet().iterator();
+                        while (it.hasNext()) {
+                            Map.Entry<Long, String> entry = it.next();
+                            Long brokerId = entry.getKey();
+                            String brokerAddr = entry.getValue();
+                            if (brokerAddr.equals(brokerAddrFound)) {
+                                brokerNameFound = brokerData.getBrokerName();
+                                it.remove();
+                                log.info("remove brokerAddr[{}, {}] from brokerAddrTable, because channel destroyed",
+                                        brokerId, brokerAddr);
+                                break;
+                            }
+
+                        }
+                    }
+                } finally {
+                    this.lock.writeLock().unlock();
+                }
+            } catch (Exception e) {
+                log.error("onChannelDestroy Exception", e);
+            }
+        }
+
+    }
+
+
 }

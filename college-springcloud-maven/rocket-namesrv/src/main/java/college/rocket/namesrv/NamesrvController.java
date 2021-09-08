@@ -66,4 +66,14 @@ public class NamesrvController {
             this.remotingServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.remotingExecutor);
 //        }
     }
+
+    public void shutdown() {
+//        this.remotingServer.shutdown();
+        this.remotingExecutor.shutdown();
+//        this.scheduledExecutorService.shutdown();
+//
+//        if (this.fileWatchService != null) {
+//            this.fileWatchService.shutdown();
+//        }
+    }
 }

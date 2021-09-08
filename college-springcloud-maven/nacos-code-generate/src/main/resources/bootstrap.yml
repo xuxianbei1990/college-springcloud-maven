@@ -8,7 +8,7 @@ spring:
         namespace: ${profiles_active:dev}
         group: ${group:DEV}_GROUP
   redis:
-    database: 4
+    database: 3
     host: 10.228.81.233
     port: 6379
     timeout: 100000

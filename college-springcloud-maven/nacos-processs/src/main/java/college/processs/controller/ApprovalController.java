@@ -6,9 +6,7 @@ import college.processs.module.Response;
 
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * @author: xuxianbei
@@ -17,7 +15,7 @@ import java.util.Random;
  * Version:V1.0
  */
 @RestController
-@RequestMapping("/approval")
+@RequestMapping("approval/")
 public class ApprovalController {
 
     @PostMapping("/all-nodes")
@@ -29,5 +27,12 @@ public class ApprovalController {
     public Response<String> starProcess(@RequestPart String detal) {
         System.out.println(detal);
         return new Response(0, "success", String.valueOf(new Random().nextInt()));
+    }
+
+    @PostMapping("processing")
+    public Response<Map<Long, String>> approvalprocessing(@RequestBody ApprovalMapDTO approvalMap) {
+        Map<Long, String> map = new HashMap<>();
+        approvalMap.getApprovalIdList().forEach(key -> map.put(key, "待张晶晶审批"));
+        return new Response(0, "success", map);
     }
 }
