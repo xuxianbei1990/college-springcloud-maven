@@ -43,6 +43,8 @@ public class MessageStoreConfig {
 
     private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
 
+    private int transientStorePoolSize = 5;
+
     private int maxMessageSize = 1024 * 1024 * 4;
 
     private boolean cleanFileForciblyEnable = true;
