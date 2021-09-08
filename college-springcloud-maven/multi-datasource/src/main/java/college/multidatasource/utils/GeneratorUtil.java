@@ -16,11 +16,14 @@ public class GeneratorUtil {
     /**
      * 数据库配置四要素
      */
-    private static final String DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
-    private static final String URL = "jdbc:mysql://10.228.81.19:38309/eop_finance_dev?useUnicode=true&characterEncoding=utf-8&useSSL=false";
-    private static final String USERNAME = "root";
-    private static final String PASSWORD = "Chenfan@123.com.cn..";
-
+//    private static final String DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
+//    private static final String URL = "jdbc:mysql://10.228.81.19:38309/eop_finance_dev?useUnicode=true&characterEncoding=utf-8&useSSL=false";
+//    private static final String USERNAME = "root";
+//    private static final String PASSWORD = "Chenfan@123.com.cn..";
+    private static final String DRIVER_NAME = "ru.yandex.clickhouse.ClickHouseDriver";
+    private static final String URL = "jdbc:clickhouse://10.228.83.251:18123/dm";
+    private static final String USERNAME = "default";
+    private static final String PASSWORD = "nEB7+b3X";
     public static void main(String[] args) {
         moduleGenerator(new String[]{
 //                "advancepay_application",
@@ -32,7 +35,7 @@ public class GeneratorUtil {
 //                "cf_invoice_header",
 //                "cf_po_detail",
 //                "cf_po_header",
-                "cf_multy_image",
+                "f_cewebrity_platform_kpi_by_day",
 
 //                "cf_wdt_rd_record_header",
 //                "downpayment_conf",

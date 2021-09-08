@@ -1,6 +1,7 @@
 package college.multidatasource.controller;
 
 import college.multidatasource.model.CfMultyImage;
+import college.multidatasource.model.FCewebrityPlatFormKpiByDay;
 import college.multidatasource.service.MultiDataSourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,4 +40,14 @@ public class MultiDataSourceController {
     public List<CfMultyImage> testDataSource2() {
         return multiDataSourceService.testDataSource2();
     }
+
+    /**
+     * 来源click
+     * @return
+     */
+    @GetMapping("test/datasource/click")
+    public List<FCewebrityPlatFormKpiByDay> testDataSourceClick() {
+        return multiDataSourceService.testDataSourceClick();
+    }
+
 }

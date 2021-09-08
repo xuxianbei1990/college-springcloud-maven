@@ -1,23 +1,23 @@
 spring:
   datasource:
     dynamic:
-#      primary: defaultdb # ÅäÖÃÄ¬ÈÏÊı¾İ¿â
+#      primary: defaultdb # é…ç½®é»˜è®¤æ•°æ®åº“
       datasource:
-        master: # Êı¾İÔ´1ÅäÖÃ
+        master: # æ•°æ®æº1é…ç½®
           url: jdbc:mysql://10.228.81.19:38309/eop_finance_test?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
           username: root
           password: Chenfan@123.com.cn..
           driver-class-name: com.mysql.cj.jdbc.Driver
-        tocdb: # Êı¾İÔ´2ÅäÖÃ
+        tocdb: # æ•°æ®æº2é…ç½®
           url: jdbc:mysql://10.228.81.19:38309/eop_finance_dev?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
           username: root
           password: Chenfan@123.com.cn..
           driver-class-name: com.mysql.cj.jdbc.Driver
-#        tocdb: # Êı¾İÔ´2ÅäÖÃ
-#          url: jdbc:postgresql://10.228.88.171:5432/dw?characterEncoding=utf8&useUnicode=true&useSSL=false&serverTimezone=GMT%2B8
-#          username: finance
-#          password: finance
-#          driver-class-name: org.postgresql.Driver
+#        click: # æ•°æ®æº2é…ç½®
+#          url: jdbc:clickhouse://10.228.83.251:18123/dm
+#          username: default
+#          password: nEB7+b3X
+#          driver-class-name: ru.yandex.clickhouse.ClickHouseDriver
       durid:
         initial-size: 1
         max-active: 100
