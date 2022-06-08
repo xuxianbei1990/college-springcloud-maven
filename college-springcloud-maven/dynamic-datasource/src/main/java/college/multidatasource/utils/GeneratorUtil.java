@@ -118,7 +118,7 @@ public class GeneratorUtil {
     private static PackageConfig getPackageConfig() {
         PackageConfig packageConfig = new PackageConfig();
         //不同模块 代码生成具体路径自定义指定
-        String basePackage = "college.multidatasource";
+        String basePackage = "college/multidatasource";
         packageConfig.setParent(basePackage)
                 .setEntity("model")
                 .setMapper("dao")

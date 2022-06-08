@@ -37,7 +37,7 @@ spring:
 
 
 mybatis-plus:
-  mapper-locations: classpath:college/multidatasource/**/dao/**/*.xml
+  mapper-locations: classpath:college/college.multidatasource/**/dao/**/*.xml
   configuration:
     lazy-loading-enabled: true
     cache-enabled: true

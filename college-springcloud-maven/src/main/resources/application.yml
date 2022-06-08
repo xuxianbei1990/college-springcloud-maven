@@ -32,12 +32,12 @@ mybatis:
 
 rocketmq:
 #  name-server: 192.168.138.3:9876
-  name-server: 10.228.81.30:9876
+  name-server: 10.228.86.202:9876
   producer:
     #    rocketMq以组概念发送
-    group: springcloud-producter
+    group: student_producer_group
     send-message-timeout: 5000
-  topic: springboot_producer
+  topic:topic_tc_record_to_finance
   topic-simple: topic_simple
   consumer:
     #    rocketMq以组概念消费， 新建一个组就会重新消费

@@ -2,6 +2,8 @@ package college.codegenerate.module;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author: xuxianbei
  * Date: 2021/3/10
@@ -9,7 +11,7 @@ import lombok.Data;
  * Version:V1.0
  */
 @Data
-public class CodeGenerateVO {
+public class CodeGenerateVO implements Serializable {
 //    @ApiModelProperty("编码")
     private String code;
 //    @ApiModelProperty("品牌")

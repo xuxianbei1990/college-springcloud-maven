@@ -1,6 +1,5 @@
 package college.multidatasource.dao;
 
-import college.multidatasource.model.CfMultyImage;
 import college.multidatasource.model.FCewebrityPlatFormKpiByDay;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 

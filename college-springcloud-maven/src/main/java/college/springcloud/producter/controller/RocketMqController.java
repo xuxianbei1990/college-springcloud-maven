@@ -232,25 +232,26 @@ public class RocketMqController {
 
     @GetMapping("test/mcn")
     public SendResult testMcn() {
-        CfChargeCommon cfChargeCommon = new CfChargeCommon();
-        cfChargeCommon.setChargeType(1);
-        cfChargeCommon.setArapType("AR");
-        cfChargeCommon.setChargeSourceCode("xxb" + (new Random()).nextInt());
-        cfChargeCommon.setChargeSourceDetail("xxb" + (new Random()).nextInt());
-        cfChargeCommon.setAmountPp(BigDecimal.ZERO);
-        cfChargeCommon.setBalance("xxb");
-        cfChargeCommon.setFinanceEntity("ssd");
-        cfChargeCommon.setInvoiceTitle("asdf");
-        cfChargeCommon.setInvoiceTitleName("qweqwe");
-        cfChargeCommon.setCreateBy(1L);
-        cfChargeCommon.setCreateName("xxf");
-        cfChargeCommon.setTenantId(2L);
-        cfChargeCommon.setCompanyId(3L);
-        cfChargeCommon.setUpdateDate(LocalDateTime.now());
-        cfChargeCommon.setUpdateBy(2L);
-        cfChargeCommon.setSettTemplate(1);
-        cfChargeCommon.setTaxRate(BigDecimal.ONE);
-        return rocketMQTemplate.syncSend("MQ_mcn_charge_finance_test", JSONObject.toJSONString(cfChargeCommon));
+//        CfChargeCommon cfChargeCommon = new CfChargeCommon();
+//        cfChargeCommon.setChargeType(1);
+//        cfChargeCommon.setArapType("AR");
+//        cfChargeCommon.setChargeSourceCode("xxb" + (new Random()).nextInt());
+//        cfChargeCommon.setChargeSourceDetail("xxb" + (new Random()).nextInt());
+//        cfChargeCommon.setAmountPp(BigDecimal.ZERO);
+//        cfChargeCommon.setBalance("xxb");
+//        cfChargeCommon.setFinanceEntity("ssd");
+//        cfChargeCommon.setInvoiceTitle("asdf");
+//        cfChargeCommon.setInvoiceTitleName("qweqwe");
+//        cfChargeCommon.setCreateBy(1L);
+//        cfChargeCommon.setCreateName("xxf");
+//        cfChargeCommon.setTenantId(2L);
+//        cfChargeCommon.setCompanyId(3L);
+//        cfChargeCommon.setUpdateDate(LocalDateTime.now());
+//        cfChargeCommon.setUpdateBy(2L);
+//        cfChargeCommon.setSettTemplate(1);
+//        cfChargeCommon.setTaxRate(BigDecimal.ONE);
+        String payload ="{\"amountPp\":100.00,\"arapType\":\"AP\",\"balance\":\"潘白雪\",\"chargeSourceCode\":\"HRJS2205120001\",\"chargeSourceDetail\":\"DS2205120004\",\"chargeType\":8,\"checkStatus\":1,\"companyId\":1473608764313796609,\"createBy\":1473617415980154882,\"createDate\":\"2022-05-13T08:54:16.536\",\"createName\":\"租户1钱532\",\"financeEntity\":\"交个朋友\",\"invoiceForm\":2,\"invoiceTitle\":\"潘白雪s\",\"invoiceTitleName\":\"潘白雪\",\"settTemplate\":5,\"taxInvoiceDate\":\"2022-05-12T08:00:00\",\"taxInvoiceNo\":\"123456\",\"taxRate\":0,\"tenantId\":3,\"updateBy\":1473617415980154882,\"updateDate\":\"2022-05-13T00:54:16.508\",\"updateName\":\"租户1钱532\"}";
+        return rocketMQTemplate.syncSend("MQ_mcn_charge_finance_test_xxb", MessageBuilder.withPayload(payload).setHeader("xxb", "xxb").build());
     }
 
 }
